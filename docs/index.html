@@ -227,7 +227,7 @@
             if (line.trim() !== "") {
               await writer.write(encoder.encode(line + "\n"));
               // Small delay to ensure ESP32 processes it
-              await new Promise((r) => setTimeout(r, 100));
+              await new Promise((r) => setTimeout(r, 300));
             }
           }
 

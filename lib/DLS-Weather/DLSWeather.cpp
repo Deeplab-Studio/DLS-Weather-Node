@@ -228,6 +228,8 @@ void DLSWeather::checkSerialCommands() {
             _lon = val;
             Serial.println("Lon Kaydedildi.");
         } else if (cmd.equalsIgnoreCase("restart")) {
+            Serial.println("Yeniden başlatılıyor...");
+            delay(1000);
             ESP.restart();
         } else if (cmd.equalsIgnoreCase("info")) {
             Serial.println("--- Ayarlar ---");
