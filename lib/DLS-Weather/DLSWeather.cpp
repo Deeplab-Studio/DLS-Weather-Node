@@ -177,10 +177,6 @@ void DLSWeather::handle() {
             Serial.println("Zamanı geldi (Dakika: " + String(currentMinute) + "), veriler gönderiliyor...");
         }
 
-        // Simule edilmiş rüzgar ve yağmur verileri (Sensör yoksa)
-        setWind(5.2, 180);
-        setRain(0, 2.5);
-
         if (send()) {
             Serial.println("Veri başarıyla gönderildi!");
             _lastSentMinute = currentMinute;
@@ -288,18 +284,31 @@ bool DLSWeather::send() {
     location["lat"] = _lat;
     location["lon"] = _lon;
 
+    // Environment Data
     JsonObject environment = doc["environment"].to<JsonObject>();
     environment["temperature"] = _temp;
-    environment["humidity"] = _humidity;
     environment["pressure"] = _pressure;
+    
+    // Humidity only if sensor supports it
+    if (_foundSensor == BME280 || _foundSensor == BME680) {
+        environment["humidity"] = _humidity;
+    }
 
-    JsonObject wind = doc["wind"].to<JsonObject>();
-    wind["speed"] = _windSpeed;
-    wind["direction"] = _windDir;
+    // Wind Data: Only send if explicit values were set (non-zero speed or logic check)
+    // For now, since we have no wind sensors attached, we SKIP it entirely based on your request.
+    // If you add wind sensor later, checking valid data is needed.
+    if (_windSpeed > 0) {
+        JsonObject wind = doc["wind"].to<JsonObject>();
+        wind["speed"] = _windSpeed;
+        wind["direction"] = _windDir;
+    }
 
-    JsonObject rain = doc["rain"].to<JsonObject>();
-    rain["rate"] = _rainRate;
-    rain["daily"] = _rainDaily;
+    // Rain Data: Only send if explicitly valid
+    if (_rainRate > 0 || _rainDaily > 0) {
+        JsonObject rain = doc["rain"].to<JsonObject>();
+        rain["rate"] = _rainRate;
+        rain["daily"] = _rainDaily;
+    }
 
     String jsonOutput;
     serializeJson(doc, jsonOutput);
