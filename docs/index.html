@@ -148,6 +148,24 @@
             oninput="updateConfig()"
           />
         </div>
+        <div class="form-group">
+          <label>Latitude</label>
+          <input
+            type="text"
+            id="lat"
+            placeholder="41.0082"
+            oninput="updateConfig()"
+          />
+        </div>
+        <div class="form-group">
+          <label>Longitude</label>
+          <input
+            type="text"
+            id="lon"
+            placeholder="28.9784"
+            oninput="updateConfig()"
+          />
+        </div>
 
         <label>Copy these commands:</label>
         <textarea id="output" readonly></textarea>
@@ -182,12 +200,16 @@
         const pass = document.getElementById("pass").value;
         const key = document.getElementById("key").value;
         const station = document.getElementById("station").value;
+        const lat = document.getElementById("lat").value;
+        const lon = document.getElementById("lon").value;
 
         let cmds = "";
         if (ssid) cmds += `ssid=${ssid}\n`;
         if (pass) cmds += `pass=${pass}\n`;
         if (key) cmds += `api=${key}\n`;
         if (station) cmds += `station=${station}\n`;
+        if (lat) cmds += `lat=${lat}\n`;
+        if (lon) cmds += `lon=${lon}\n`;
 
         if (cmds) cmds += "restart";
 
@@ -227,7 +249,7 @@
             if (line.trim() !== "") {
               await writer.write(encoder.encode(line + "\n"));
               // Small delay to ensure ESP32 processes it
-              await new Promise((r) => setTimeout(r, 300));
+              await new Promise((r) => setTimeout(r, 500));
             }
           }
 
