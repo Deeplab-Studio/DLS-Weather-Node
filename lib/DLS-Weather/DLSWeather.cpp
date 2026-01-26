@@ -48,14 +48,13 @@ void DLSWeather::begin() {
         Serial.println("station=STATION_ID");
         Serial.println("Ayarlar girilene kadar bekleniyor...");
 
-        while (_ssid == "WIFI_SSID_GIRIN" || _ssid.isEmpty()) {
+        Serial.println("station=STATION_ID");
+        Serial.println("Ayarlar girilene kadar bekleniyor... (Bitince 'restart' komutu gönder)");
+
+        while (true) {
              checkSerialCommands();
              delay(10);
         }
-        
-        Serial.println("\nAyarlar Alındı! Devam ediliyor...");
-        // Ayarlar değiştiği için tekrar yazdıralım
-        Serial.println("SSID: " + _ssid);
     }
 
     // Wi-Fi Başlatma
