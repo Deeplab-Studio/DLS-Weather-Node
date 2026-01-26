@@ -1,0 +1,160 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>DLSWeather Web Installer</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script
+      type="module"
+      src="https://unpkg.com/esp-web-tools@10/dist/web/install-button.js?module"
+    ></script>
+    <style>
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
+          Arial, sans-serif;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+        margin: 0;
+        background-color: #f0f2f5;
+        padding: 20px;
+      }
+      .container {
+        background: white;
+        padding: 2rem;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        text-align: center;
+        max-width: 600px;
+        width: 100%;
+      }
+      h1 {
+        margin-top: 0;
+        color: #333;
+      }
+      p {
+        color: #666;
+        margin-bottom: 2rem;
+      }
+
+      .config-box {
+        text-align: left;
+        margin-top: 30px;
+        border-top: 1px solid #eee;
+        padding-top: 20px;
+      }
+      .form-group {
+        margin-bottom: 15px;
+      }
+      label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: 500;
+        color: #555;
+      }
+      input {
+        width: 100%;
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        box-sizing: border-box;
+      }
+      textarea {
+        width: 100%;
+        height: 120px;
+        padding: 10px;
+        font-family: monospace;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        resize: vertical;
+        background: #f9f9f9;
+      }
+      .step {
+        font-weight: bold;
+        color: #007bff;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>DLSWeather Installer</h1>
+      <p>
+        1. Connect your ESP32 via USB.<br />2. Click
+        <b>Connect</b> below.<br />3. Select <b>Install DLSWeather</b>.<br />4.
+        After installation, click <b>Logs & Console</b>.
+      </p>
+
+      <esp-web-install-button manifest="manifest.json"></esp-web-install-button>
+
+      <div class="config-box">
+        <h3>Configuration Helper</h3>
+        <p>
+          Enter your details below to generate the commands. then Copy & Paste
+          them into the terminal log.
+        </p>
+
+        <div class="form-group">
+          <label>Wi-Fi SSID</label>
+          <input
+            type="text"
+            id="ssid"
+            placeholder="MyWiFiNetwork"
+            oninput="updateConfig()"
+          />
+        </div>
+        <div class="form-group">
+          <label>Wi-Fi Password</label>
+          <input
+            type="text"
+            id="pass"
+            placeholder="SecretPassword"
+            oninput="updateConfig()"
+          />
+        </div>
+        <div class="form-group">
+          <label>API Key</label>
+          <input
+            type="text"
+            id="key"
+            placeholder="YOUR_API_KEY"
+            oninput="updateConfig()"
+          />
+        </div>
+        <div class="form-group">
+          <label>Station ID</label>
+          <input
+            type="text"
+            id="station"
+            placeholder="STATION_001"
+            oninput="updateConfig()"
+          />
+        </div>
+
+        <label>Copy these commands:</label>
+        <textarea id="output" readonly></textarea>
+      </div>
+    </div>
+
+    <script>
+      function updateConfig() {
+        const ssid = document.getElementById("ssid").value;
+        const pass = document.getElementById("pass").value;
+        const key = document.getElementById("key").value;
+        const station = document.getElementById("station").value;
+
+        let cmds = "";
+        if (ssid) cmds += `ssid=${ssid}\n`;
+        if (pass) cmds += `pass=${pass}\n`;
+        if (key) cmds += `api=${key}\n`;
+        if (station) cmds += `station=${station}\n`;
+
+        if (cmds) cmds += "restart";
+
+        document.getElementById("output").value = cmds;
+      }
+    </script>
+  </body>
+</html>
