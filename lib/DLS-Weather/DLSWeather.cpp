@@ -218,15 +218,21 @@ void DLSWeather::checkSerialCommands() {
              _stationId = val; // RAM'i de güncelle
             Serial.println("Station ID Kaydedildi.");
         } else if (cmd.startsWith("lat=")) {
-            float val = cmd.substring(4).toFloat();
+            String valStr = cmd.substring(4);
+            valStr.replace(',', '.');
+            float val = valStr.toFloat();
             _preferences.putFloat("lat", val);
             _lat = val;
-            Serial.println("Lat Kaydedildi.");
+            Serial.print("Lat Kaydedildi: ");
+            Serial.println(val, 6);
         } else if (cmd.startsWith("lon=")) {
-            float val = cmd.substring(4).toFloat();
+            String valStr = cmd.substring(4);
+            valStr.replace(',', '.');
+            float val = valStr.toFloat();
             _preferences.putFloat("lon", val);
             _lon = val;
-            Serial.println("Lon Kaydedildi.");
+            Serial.print("Lon Kaydedildi: ");
+            Serial.println(val, 6);
         } else if (cmd.equalsIgnoreCase("restart")) {
             Serial.println("Yeniden başlatılıyor...");
             delay(1000);
