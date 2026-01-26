@@ -151,6 +151,28 @@
 
         <label>Copy these commands:</label>
         <textarea id="output" readonly></textarea>
+
+        <div style="margin-top: 15px; text-align: right">
+          <button
+            id="btnSend"
+            onclick="sendToDevice()"
+            style="
+              background: #28a745;
+              color: white;
+              border: none;
+              padding: 10px 20px;
+              border-radius: 4px;
+              cursor: pointer;
+              font-weight: bold;
+            "
+          >
+            Send to Device (Auto-Config)
+          </button>
+          <p
+            id="statusMsg"
+            style="font-size: 0.8rem; color: #666; margin-top: 5px"
+          ></p>
+        </div>
       </div>
     </div>
 
@@ -170,6 +192,60 @@
         if (cmds) cmds += "restart";
 
         document.getElementById("output").value = cmds;
+      }
+
+      async function sendToDevice() {
+        const cmds = document.getElementById("output").value;
+        if (!cmds) {
+          alert("Please fill in the configuration first!");
+          return;
+        }
+
+        if (!navigator.serial) {
+          alert(
+            "Web Serial API not supported in this browser. Please use Chrome, Edge or Opera.",
+          );
+          return;
+        }
+
+        const status = document.getElementById("statusMsg");
+        let port;
+
+        try {
+          status.innerText = "Requesting port...";
+          port = await navigator.serial.requestPort();
+          await port.open({ baudRate: 115200 });
+
+          status.innerText = "Connected! Sending data...";
+
+          const encoder = new TextEncoder();
+          const writer = port.writable.getWriter();
+
+          // Split by new line and send line by line with delay
+          const lines = cmds.split("\n");
+          for (const line of lines) {
+            if (line.trim() !== "") {
+              await writer.write(encoder.encode(line + "\n"));
+              // Small delay to ensure ESP32 processes it
+              await new Promise((r) => setTimeout(r, 100));
+            }
+          }
+
+          writer.releaseLock();
+          status.innerText = "Configuration sent! Device should restart.";
+          status.style.color = "green";
+
+          // Close port after a short while
+          setTimeout(async () => {
+            await port.close();
+            status.innerText = "Port closed.";
+            status.style.color = "#666";
+          }, 2000);
+        } catch (e) {
+          console.error(e);
+          status.innerText = "Error: " + e.message;
+          status.style.color = "red";
+        }
       }
     </script>
   </body>
