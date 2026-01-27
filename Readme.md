@@ -107,7 +107,9 @@ x-api-key: <api_key>
   "environment": {
     "temperature": 22.5,  // Optional
     "humidity": 60,       // Optional
-    "pressure": 1013      // Optional
+    "pressure": 1013,      // Optional
+    "uv_index": 3.5,       // Optional
+    "air_quality": 45      // Optional
   },
   "wind": {
     "speed": 5.2,     // Optional
