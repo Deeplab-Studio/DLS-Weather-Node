@@ -22,8 +22,7 @@ The following sensors can be easily connected to the ESP32 via **I2C**:
 - **BME280**
 - **BME680**
 
-![Configuration](docs/images/diagram.png)
----
+## ![Configuration](docs/images/diagram.png)
 
 ## 🔑 Getting an API Key
 
@@ -60,7 +59,7 @@ Copy and securely store your generated API key.\
 
 - Click **Connect**
 - Select **Install DLSWeather**\
-![Configuration](docs/images/img6.png)
+  ![Configuration](docs/images/img6.png)
 
 ### 3️⃣ Step – Configure Settings
 
@@ -69,7 +68,7 @@ After installation, configure:
 - Wi-Fi credentials
 - API Key
 - Sensor settings\
-![Configuration](docs/images/img7.png)
+  ![Configuration](docs/images/img7.png)
 
 ### 4️⃣ Step – Verify on Website
 
@@ -105,17 +104,17 @@ x-api-key: <api_key>
     "lon": 0.0
   },
   "environment": {
-    "temperature": 22.5,  // Optional
-    "humidity": 60,       // Optional
-    "pressure": 1013      // Optional
+    "temperature": 22.5, // Optional
+    "humidity": 60, // Optional
+    "pressure": 1013 // Optional
   },
   "wind": {
-    "speed": 5.2,     // Optional
-    "direction": 180  // Optional 
+    "speed": 5.2, // Optional
+    "direction": 180 // Optional
   },
   "rain": {
-    "rate": 0,    // Optional
-    "daily": 2.5  // Optional
+    "rate": 0, // Optional
+    "daily": 2.5 // Optional
   }
 }
 ```
@@ -127,4 +126,3 @@ x-api-key: <api_key>
 This is a community-driven project. Feel free to contribute, deploy nodes, or share feedback to help improve the DLS Weather ecosystem.
 
 📡 **DLS Weather – Community Powered Weather Data Network**
-
