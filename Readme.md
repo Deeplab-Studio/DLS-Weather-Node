@@ -104,9 +104,17 @@ x-api-key: <api_key>
     "lon": 0.0
   },
   "environment": {
+<<<<<<< HEAD
     "temperature": 22.5, // Optional
     "humidity": 60, // Optional
     "pressure": 1013 // Optional
+=======
+    "temperature": 22.5,  // Optional
+    "humidity": 60,       // Optional
+    "pressure": 1013,      // Optional
+    "uv_index": 3.5,       // Optional
+    "air_quality": 45      // Optional
+>>>>>>> 2bdaf117cd5dbe65b78956788ef8baf4b1e39afd
   },
   "wind": {
     "speed": 5.2, // Optional

@@ -10,6 +10,7 @@
 #include "DLSWeather.h"
 
 // --- KONFIGURASYON ---
+const int LED_PIN = 2; // Çoğu ESP32'de dahili LED GPIO 2'dedir
 Preferences preferences;
 String _ssid = "WIFI_SSID_GIRIN";
 String _pass = "WIFI_SIFRE_GIRIN";
@@ -124,6 +125,8 @@ void detectSensor() {
 
 void setup() {
     Serial.begin(115200);
+    pinMode(LED_PIN, OUTPUT);
+    digitalWrite(LED_PIN, LOW);
     
     // 1. Kayitli Ayarlari Yukle
     loadPreferences();
@@ -149,14 +152,19 @@ void setup() {
 
     int attempt = 0;
     while (WiFi.status() != WL_CONNECTED && attempt < 20) {
-        delay(500);
+        digitalWrite(LED_PIN, HIGH);
+        delay(250);
+        digitalWrite(LED_PIN, LOW);
+        delay(250);
         Serial.print(".");
         attempt++;
     }
 
     if (WiFi.status() == WL_CONNECTED) {
+        digitalWrite(LED_PIN, HIGH); // Baglaninca sabit yansin
         Serial.println("\nWi-Fi Baglandi!");
     } else {
+        digitalWrite(LED_PIN, LOW); // Baglanamazsa sönsün
         Serial.println("\nWi-Fi Basarisiz. Loop'ta tekrar denenecek.");
     }
 
@@ -170,6 +178,7 @@ void setup() {
 void loop() {
     // Wi-Fi Yonetimi
     if (WiFi.status() != WL_CONNECTED) {
+        digitalWrite(LED_PIN, LOW); // Baglanti koparsa LED sönsün
         static unsigned long lastReconnect = 0;
         if (millis() - lastReconnect > 10000) {
             WiFi.disconnect();
@@ -178,6 +187,8 @@ void loop() {
         }
         checkSerialCommands();
         return;
+    } else {
+        digitalWrite(LED_PIN, HIGH); // Bagli oldugu surece yansin
     }
 
     // Serial Komutlarini Dinle
