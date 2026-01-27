@@ -34,6 +34,7 @@ SensorType foundSensor = NONE;
 
 unsigned long lastSendTime = 0;
 int lastSentMinute = -1;
+bool firstRun = true;
 
 void checkSerialCommands() {
     if (Serial.available()) {
@@ -197,11 +198,16 @@ void loop() {
     timeClient.update();
     int currentMinute = timeClient.getMinutes();
 
-    // Veri Gonderimi (0. ve 30. Dakikalar)
-    if ((currentMinute == 0 || currentMinute == 30) && currentMinute != lastSentMinute) {
-        Serial.println("\n--- Veriler Okunuyor ve Gonderiliyor ---");
-
+    // Veri Gonderimi (İlk açılış veya 0. ve 30. Dakikalar)
+    if (firstRun || ((currentMinute == 0 || currentMinute == 30) && currentMinute != lastSentMinute)) {
+        if (firstRun) {
+            Serial.println("\n--- İlk Acilis Verisi Hazirlaniyor ---");
+        } else {
+            Serial.println("\n--- Zamanı Geldi, Veriler Okunuyor ---");
+        }
+        
         switch (foundSensor) {
+            // ... (keep same switch) ...
             case BMP280:
                 dls->temperature(bmp.readTemperature());
                 dls->pressure(bmp.readPressure() / 100.0F);
@@ -225,8 +231,13 @@ void loop() {
         if (dls->send(timeClient.getEpochTime())) {
             Serial.println("Basariyla gonderildi.");
             lastSentMinute = currentMinute;
+            firstRun = false; // İlk gönderim başarılı (veya denendi), bayrağı indir
         } else {
             Serial.println("Gonderme hatasi!");
+            // Hata olsa da firstRun'ı false yapabiliriz ki spam yapmasın, 
+            // ya da ilk başarılı olana kadar true tutabiliriz. 
+            // Genelde bir kez denemesi yeterlidir.
+            firstRun = false; 
         }
     }
 
