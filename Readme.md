@@ -34,7 +34,7 @@ The DLS Weather Node is designed to work with various ESP32 boards, sensors, and
 | **BME280** | I2C | ✅ | Temperature, Humidity, Pressure |
 | **BME680** | I2C | ✅ | Temperature, Humidity, Pressure, Gas (IAQ) |
 | **SHTC3** | I2C | ❌ | Temperature, Humidity |
-| **SHT31** | I2C | ❌ | Temperature, Humidity |
+| **SHT31** | I2C | ✅ | Temperature, Humidity |
 | **SHT35** | I2C | ❌ | Temperature, Humidity |
 | **VEML6075** | I2C | ❌ | UV Index (Supported in code, not verified) |
 | **BH1750** | I2C | ❌ | Light Level (Planned) |
