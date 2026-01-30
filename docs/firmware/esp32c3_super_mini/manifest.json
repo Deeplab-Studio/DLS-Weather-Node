@@ -1,23 +1,23 @@
 {
-  "name": "DLS Weather Node - esp32c3_super_mini",
-  "version": "1.0.2",
-  "builds": [
-    {
-      "chipFamily": "ESP32-C3",
-      "parts": [
+    "name": "DLS Weather Node - esp32c3_super_mini",
+    "version": "1.0.2",
+    "builds": [
         {
-          "path": "bootloader.bin",
-          "offset": 0
-        },
-        {
-          "path": "partitions.bin",
-          "offset": 32768
-        },
-        {
-          "path": "firmware.bin",
-          "offset": 65536
+            "chipFamily": "ESP32C3M1",
+            "parts": [
+                {
+                    "path": "bootloader.bin",
+                    "offset": 0
+                },
+                {
+                    "path": "partitions.bin",
+                    "offset": 32768
+                },
+                {
+                    "path": "firmware.bin",
+                    "offset": 65536
+                }
+            ]
         }
-      ]
-    }
-  ]
+    ]
 }
