@@ -81,4 +81,25 @@ def copy_firmware(source, target, env):
         json.dump(manifest, f, indent=4)
     print(f"Generated manifest at {manifest_path}")
 
+    # --- Generate UPDATE Manifest (Minimal - Only Firmware) ---
+    manifest_update = {
+        "name": f"DLS Weather Node (Update) - {env_name}",
+        "version": manifest["version"],
+        "builds": [
+            {
+                "chipFamily": manifest["builds"][0]["chipFamily"],
+                "parts": [
+                    {
+                        "path": "firmware.bin",
+                        "offset": app_offset
+                    }
+                ]
+            }
+        ]
+    }
+    update_path = os.path.join(firmware_dir, "manifest_update.json")
+    with open(update_path, "w") as f:
+        json.dump(manifest_update, f, indent=4)
+    print(f"Generated update manifest at {update_path}")
+
 env.AddPostAction("$BUILD_DIR/firmware.bin", copy_firmware)
