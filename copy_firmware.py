@@ -1,61 +1,84 @@
 import shutil
 import os
+import json
 
 Import("env")
 
 def copy_firmware(source, target, env):
     print("Copying firmware files to docs/ folder for Webflasher...")
     
+    # Get environment info
+    env_name = env["PIOENV"]
+    board = env["BOARD"]
+    
     # Define paths
     build_dir = env.subst("$BUILD_DIR")
-    docs_dir = os.path.join(env.subst("$PROJECT_DIR"), "docs")
+    # Structure: docs/firmware/<env_name>/
+    firmware_dir = os.path.join(env.subst("$PROJECT_DIR"), "docs", "firmware", env_name)
     
-    # Ensure docs directory exists
-    if not os.path.exists(docs_dir):
-        os.makedirs(docs_dir)
+    # Ensure firmware directory exists
+    if not os.path.exists(firmware_dir):
+        os.makedirs(firmware_dir)
 
-    # File mappings (Source in .pio -> Target in docs)
-    files = {
-        "firmware.bin": "firmware.bin",
-        "partitions.bin": "partitions.bin",
-        "bootloader.bin": "bootloader.bin",
-        "boot_app0.bin": "boot_app0.bin" # This might need to be found in packages
+    # Determine Offsets based on Board Type
+    # ESP32: Bootloader @ 0x1000
+    # C3/S3/C6: Bootloader @ 0x0
+    is_esp32 = "esp32" in board and not any(x in board for x in ["c3", "s3", "c6", "h2"])
+    
+    bootloader_offset = 0x1000 if is_esp32 else 0x0
+    partitions_offset = 0x8000
+    app_offset = 0x10000
+    boot_app0_offset = 0xe000 # Only for ESP32 usually
+
+    manifest = {
+        "name": f"DLS Weather Node - {env_name}",
+        "version": "1.0.2",
+        "builds": [
+            {
+                "chipFamily": "ESP32" if is_esp32 else board.upper().replace("DEVKIT", "").replace("-", ""), # Approximate
+                "parts": []
+            }
+        ]
     }
 
-    # Helper to copy
-    def my_copy(src, dst):
+    # Helper to copy and add to manifest
+    def copy_opt(filename, offset):
+        src = os.path.join(build_dir, filename)
+        dst = os.path.join(firmware_dir, filename)
         if os.path.exists(src):
             shutil.copy(src, dst)
-            print(f"Copied {src} -> {dst}")
+            manifest["builds"][0]["parts"].append({
+                "path": filename,
+                "offset": offset
+            })
+            print(f"Copied {filename} -> {dst}")
         else:
-            print(f"Warning: Source file {src} not found!")
+            # Fallback for boot_app0
+            if filename == "boot_app0.bin":
+                try:
+                    platform_packages = env.PioPlatform().get_package_dir("framework-arduinoespressif32")
+                    src_pkg = os.path.join(platform_packages, "tools", "partitions", "boot_app0.bin")
+                    if os.path.exists(src_pkg):
+                         shutil.copy(src_pkg, dst)
+                         manifest["builds"][0]["parts"].append({
+                            "path": filename,
+                            "offset": offset
+                        })
+                         print(f"Copied {filename} (from pkg) -> {dst}")
+                except:
+                    pass
 
-    # Copy firmware and partitions
-    my_copy(os.path.join(build_dir, "firmware.bin"), os.path.join(docs_dir, "firmware.bin"))
-    my_copy(os.path.join(build_dir, "partitions.bin"), os.path.join(docs_dir, "partitions.bin"))
-    my_copy(os.path.join(build_dir, "bootloader.bin"), os.path.join(docs_dir, "bootloader.bin"))
-    
-    # boot_app0.bin is tricky, it's usually in the arduino framework package.
-    # Often for simple purposes, users might overlook it, but it's needed for OTA layout.
-    # PlatformIO puts it in ~/.platformio/packages/framework-arduinoespressif32/tools/partitions/boot_app0.bin
-    # But finding it dynamically is better or we just skip it if it's not generated in build dir.
-    # Standard Arduino/ESP32 build might not copy it to build dir. 
-    # Let's try to locate it via partition table info or just assume standard path if possible.
-    # For now, let's verify if 'boot_app0.bin' is in the build dir (sometimes it is).
-    # If not, we might need a more complex lookup.
-    
-    # Try finding it in the build directory first (some versions copy it)
-    if os.path.exists(os.path.join(build_dir, "boot_app0.bin")):
-        my_copy(os.path.join(build_dir, "boot_app0.bin"), os.path.join(docs_dir, "boot_app0.bin"))
-    else:
-        # Fallback: Try to find in packages
-        # This is a bit hacky but works for many standard setups
-        try:
-            platform_packages = env.PioPlatform().get_package_dir("framework-arduinoespressif32")
-            boot_app0_path = os.path.join(platform_packages, "tools", "partitions", "boot_app0.bin")
-            if os.path.exists(boot_app0_path):
-                 my_copy(boot_app0_path, os.path.join(docs_dir, "boot_app0.bin"))
-        except:
-            print("Could not locate boot_app0.bin in packages.")
+    # Copy files
+    copy_opt("bootloader.bin", bootloader_offset)
+    copy_opt("partitions.bin", partitions_offset)
+    if is_esp32:
+        copy_opt("boot_app0.bin", boot_app0_offset)
+    copy_opt("firmware.bin", app_offset)
+
+    # Write Manifest
+    manifest_path = os.path.join(firmware_dir, "manifest.json")
+    with open(manifest_path, "w") as f:
+        json.dump(manifest, f, indent=4)
+    print(f"Generated manifest at {manifest_path}")
 
 env.AddPostAction("$BUILD_DIR/firmware.bin", copy_firmware)

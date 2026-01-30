@@ -207,16 +207,34 @@
         <span id="step1Title">Install Firmware</span>
       </div>
       <div class="step-desc" id="step1Desc">
-        Connect your ESP32 via USB and click the button below.
+        Select your device type and connect via USB.
       </div>
 
-      <div class="warning-box">
-        <span>⚠️</span>
-        <span id="warningText">"Preparing installation" means <b>Erasing Flash</b>. This takes
-          10-60 seconds. Please be patient!</span>
+      <div class="input-group">
+        <label id="lblDevice">Device Type</label>
+        <select id="deviceType" onchange="updateManifest()"
+          style="width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 1rem; background: var(--surface);">
+          <option value="esp32_wroom">Standard ESP32 (WROOM)</option>
+          <option value="esp32c3_super_mini">ESP32-C3 SuperMini</option>
+          <option value="esp32s3_super_mini">ESP32-S3 SuperMini</option>
+        </select>
       </div>
 
-      <esp-web-install-button manifest="manifest.json"></esp-web-install-button>
+      <div class="input-group">
+        <label id="lblMode">Installation Mode</label>
+        <select id="installMode" onchange="updateMode()"
+          style="width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 1rem; background: var(--surface);">
+          <option value="update">Update Only (Keep Settings)</option>
+          <option value="clean">Clean Install (Erase All)</option>
+        </select>
+      </div>
+
+      <div class="warning-box" id="modeWarning">
+        <span>ℹ️</span>
+        <span id="modeText">Update mode keeps your WiFi & Config.</span>
+      </div>
+
+      <esp-web-install-button id="installBtn" manifest="firmware/esp32_wroom/manifest.json"></esp-web-install-button>
     </div>
 
     <!-- STEP 2 -->
@@ -305,6 +323,12 @@
         btnSend: "Save Settings",
         lblLat: "Latitude",
         lblLon: "Longitude",
+        lblDevice: "Device Type",
+        lblMode: "Installation Mode",
+        optUpdate: "Update Only (Keep Settings)",
+        optClean: "Clean Install (Erase All)",
+        modeUpdate: "Update mode keeps your WiFi & Config.",
+        modeClean: "⚠️ IMPORTANT: You MUST check 'Erase Device' in the popup!",
         statusReq: "Requesting port...",
         statusConn: "Connected! communicating...",
         statusRead: "Reading configuration...",
@@ -329,6 +353,12 @@
         btnSend: "Ayarları Kaydet",
         lblLat: "Enlem (Lat)",
         lblLon: "Boylam (Lon)",
+        lblDevice: "Cihaz Tipi",
+        lblMode: "Yükleme Modu",
+        optUpdate: "Sadece Güncelle (Ayarları Koru)",
+        optClean: "Temiz Kurulum (Her Şeyi Sil)",
+        modeUpdate: "Güncelleme modu WiFi ve ayarlarınızı korur.",
+        modeClean: "⚠️ ÖNEMLİ: Açılan pencerede 'Erase Device' seçeneğini işaretlemelisiniz!",
         statusReq: "Port isteniyor...",
         statusConn: "Bağlandı! Haberleşiliyor...",
         statusRead: "Ayarlar okunuyor...",
@@ -354,13 +384,47 @@
       document.getElementById("subtitle").innerText = t.subtitle;
       document.getElementById("step1Title").innerText = t.step1Title;
       document.getElementById("step1Desc").innerText = t.step1Desc;
-      document.getElementById("warningText").innerHTML = t.warningText;
+      //   document.getElementById("warningText").innerHTML = t.warningText; // Removed static warning
       document.getElementById("step2Title").innerText = t.step2Title;
       document.getElementById("step2Desc").innerText = t.step2Desc;
       document.getElementById("btnRead").innerText = t.btnRead;
       document.getElementById("btnSend").innerText = t.btnSend;
       document.getElementById("lblLat").innerText = t.lblLat;
       document.getElementById("lblLon").innerText = t.lblLon;
+
+      document.getElementById("lblDevice").innerText = t.lblDevice;
+      document.getElementById("lblMode").innerText = t.lblMode;
+
+      // Update Select Options
+      const selMode = document.getElementById("installMode");
+      selMode.options[0].text = t.optUpdate;
+      selMode.options[1].text = t.optClean;
+
+      updateMode(); // Update warning text
+    }
+
+    function updateManifest() {
+      const dev = document.getElementById("deviceType").value;
+      const btn = document.getElementById("installBtn");
+      btn.setAttribute("manifest", "firmware/" + dev + "/manifest.json");
+    }
+
+    function updateMode() {
+      const mode = document.getElementById("installMode").value;
+      const note = document.getElementById("modeText");
+      const t = translations[currentLang];
+
+      if (mode === "clean") {
+        note.innerText = t.modeClean;
+        document.getElementById("modeWarning").style.borderColor = "#ef4444"; // Red
+        document.getElementById("modeWarning").style.backgroundColor = "#fef2f2";
+        document.getElementById("modeWarning").style.color = "#b91c1c";
+      } else {
+        note.innerText = t.modeUpdate;
+        document.getElementById("modeWarning").style.borderColor = "#2563eb"; // Blue
+        document.getElementById("modeWarning").style.backgroundColor = "#eff6ff";
+        document.getElementById("modeWarning").style.color = "#1e40af";
+      }
     }
 
     updateTexts();

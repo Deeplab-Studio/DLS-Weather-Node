@@ -25,7 +25,6 @@ The DLS Weather Node is designed to work with various ESP32 boards, sensors, and
 | **Standard ESP32** | ESP32-WROOM | ✅ | Classic ESP32 |
 | **SuperMini ESP32-C3** | ESP32-C3 | ✅ | Recommended Board (Low Power, Compact) |
 | **ESP32-S3** | ESP32-S3 | ❌ | High Performance, AI Features |
-| **ESP32-C6** | ESP32-C6 | ❌ | WiFi 6, Matter Support |
 
 ### 🌡️ Supported Sensors
 

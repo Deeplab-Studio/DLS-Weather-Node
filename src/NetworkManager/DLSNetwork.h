@@ -4,12 +4,14 @@
 #include <WiFi.h>
 #include <WiFiUdp.h>
 #include <NTPClient.h>
+#include <ESPmDNS.h>
 
 class DLSNetwork {
 public:
     DLSNetwork();
     void begin(String ssid, String pass, int ledPin = -1);
     void update();
+    void startMDNS(const char* hostname);
     
     // Status
     bool isConnected();

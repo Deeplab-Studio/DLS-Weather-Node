@@ -71,3 +71,15 @@ unsigned long DLSNetwork::getEpochTime() {
 int DLSNetwork::getMinutes() {
     return _timeClient->getMinutes();
 }
+
+void DLSNetwork::startMDNS(const char* hostname) {
+    if (MDNS.begin(hostname)) {
+        Serial.printf("mDNS baslatildi: %s.local\n", hostname);
+        // Add service to MDNS-SD
+        MDNS.addService("http", "tcp", 80);
+        // Custom service for DLS Weather discovery
+        MDNS.addService("dls_weather", "udp", 12345); 
+    } else {
+        Serial.println("Hata: mDNS baslatilamadi!");
+    }
+}

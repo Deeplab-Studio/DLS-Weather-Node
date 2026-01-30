@@ -120,6 +120,13 @@ void setup() {
 
     // 5. Network Baslat
     network.begin(config.getSSID(), config.getPass(), LED_PIN);
+    
+    // 5b. mDNS Baslat
+    String hostname = "dls-weather";
+    if (!config.getStationID().isEmpty() && config.getStationID() != "ST-XXXXX") {
+        hostname += "-" + config.getStationID();
+    }
+    network.startMDNS(hostname.c_str());
 
     // 6. Sensor Baslat
     sensorManager.begin(&Wire);
