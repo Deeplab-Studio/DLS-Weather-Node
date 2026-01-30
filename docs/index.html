@@ -1,199 +1,205 @@
 <!doctype html>
 <html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>DLSWeather Installer</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script
+      type="module"
+      src="https://unpkg.com/esp-web-tools@10/dist/web/install-button.js?module"
+    ></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --primary: #2563eb;
+        --primary-hover: #1d4ed8;
+        --bg: #f8fafc;
+        --surface: #ffffff;
+        --text-main: #1e293b;
+        --text-muted: #64748b;
+        --border: #e2e8f0;
+        --success: #10b981;
+        --warning: #f59e0b;
+      }
 
-<head>
-  <meta charset="utf-8" />
-  <title>DLSWeather Installer</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <script type="module" src="https://unpkg.com/esp-web-tools@10/dist/web/install-button.js?module"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
-  <style>
-    :root {
-      --primary: #2563eb;
-      --primary-hover: #1d4ed8;
-      --bg: #f8fafc;
-      --surface: #ffffff;
-      --text-main: #1e293b;
-      --text-muted: #64748b;
-      --border: #e2e8f0;
-      --success: #10b981;
-      --warning: #f59e0b;
-    }
+      body {
+        font-family: "Inter", sans-serif;
+        background-color: var(--bg);
+        color: var(--text-main);
+        margin: 0;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        min-height: 100vh;
+      }
 
-    body {
-      font-family: "Inter", sans-serif;
-      background-color: var(--bg);
-      color: var(--text-main);
-      margin: 0;
-      padding: 20px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      min-height: 100vh;
-    }
+      .header-actions {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+      }
 
-    .header-actions {
-      position: absolute;
-      top: 20px;
-      right: 20px;
-    }
+      .lang-btn {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        padding: 8px 12px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 0.9rem;
+        color: var(--text-main);
+        transition: all 0.2s;
+      }
 
-    .lang-btn {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      padding: 8px 12px;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 0.9rem;
-      color: var(--text-main);
-      transition: all 0.2s;
-    }
+      .lang-btn:hover {
+        border-color: var(--primary);
+        color: var(--primary);
+      }
 
-    .lang-btn:hover {
-      border-color: var(--primary);
-      color: var(--primary);
-    }
+      .main-card {
+        background: var(--surface);
+        border-radius: 16px;
+        box-shadow:
+          0 4px 6px -1px rgb(0 0 0 / 0.1),
+          0 2px 4px -2px rgb(0 0 0 / 0.1);
+        width: 100%;
+        max-width: 500px;
+        padding: 2rem;
+        margin-top: 40px;
+      }
 
-    .main-card {
-      background: var(--surface);
-      border-radius: 16px;
-      box-shadow:
-        0 4px 6px -1px rgb(0 0 0 / 0.1),
-        0 2px 4px -2px rgb(0 0 0 / 0.1);
-      width: 100%;
-      max-width: 500px;
-      padding: 2rem;
-      margin-top: 40px;
-    }
+      h1 {
+        font-size: 1.5rem;
+        font-weight: 600;
+        margin: 0 0 0.5rem 0;
+        text-align: center;
+      }
 
-    h1 {
-      font-size: 1.5rem;
-      font-weight: 600;
-      margin: 0 0 0.5rem 0;
-      text-align: center;
-    }
+      .subtitle {
+        color: var(--text-muted);
+        text-align: center;
+        margin-bottom: 2rem;
+        line-height: 1.5;
+      }
 
-    .subtitle {
-      color: var(--text-muted);
-      text-align: center;
-      margin-bottom: 2rem;
-      line-height: 1.5;
-    }
+      .step-container {
+        border-left: 3px solid var(--border);
+        padding-left: 20px;
+        margin-bottom: 2rem;
+        position: relative;
+      }
 
-    .step-container {
-      border-left: 3px solid var(--border);
-      padding-left: 20px;
-      margin-bottom: 2rem;
-      position: relative;
-    }
+      .step-container.active {
+        border-color: var(--primary);
+      }
 
-    .step-container.active {
-      border-color: var(--primary);
-    }
+      .step-title {
+        font-weight: 600;
+        font-size: 1.1rem;
+        margin-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
 
-    .step-title {
-      font-weight: 600;
-      font-size: 1.1rem;
-      margin-bottom: 0.5rem;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
+      .step-desc {
+        color: var(--text-muted);
+        font-size: 0.9rem;
+        margin-bottom: 1rem;
+      }
 
-    .step-desc {
-      color: var(--text-muted);
-      font-size: 0.9rem;
-      margin-bottom: 1rem;
-    }
+      .warning-box {
+        background: #fffbeb;
+        border: 1px solid #fcd34d;
+        color: #92400e;
+        padding: 12px;
+        border-radius: 8px;
+        font-size: 0.85rem;
+        margin-bottom: 1rem;
+        display: flex;
+        gap: 10px;
+        align-items: flex-start;
+      }
 
-    .warning-box {
-      background: #fffbeb;
-      border: 1px solid #fcd34d;
-      color: #92400e;
-      padding: 12px;
-      border-radius: 8px;
-      font-size: 0.85rem;
-      margin-bottom: 1rem;
-      display: flex;
-      gap: 10px;
-      align-items: flex-start;
-    }
+      .input-group {
+        margin-bottom: 1rem;
+      }
 
-    .input-group {
-      margin-bottom: 1rem;
-    }
+      label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-size: 0.9rem;
+        font-weight: 500;
+        color: var(--text-main);
+      }
 
-    label {
-      display: block;
-      margin-bottom: 0.5rem;
-      font-size: 0.9rem;
-      font-weight: 500;
-      color: var(--text-main);
-    }
+      input {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        font-size: 1rem;
+        transition: border-color 0.2s;
+        box-sizing: border-box;
+      }
 
-    input {
-      width: 100%;
-      padding: 10px;
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      font-size: 1rem;
-      transition: border-color 0.2s;
-      box-sizing: border-box;
-    }
+      input:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+      }
 
-    input:focus {
-      outline: none;
-      border-color: var(--primary);
-      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
-    }
+      .btn-primary {
+        background: var(--primary);
+        color: white;
+        border: none;
+        width: 100%;
+        padding: 12px;
+        border-radius: 8px;
+        font-weight: 500;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: background 0.2s;
+      }
 
-    .btn-primary {
-      background: var(--primary);
-      color: white;
-      border: none;
-      width: 100%;
-      padding: 12px;
-      border-radius: 8px;
-      font-weight: 500;
-      font-size: 1rem;
-      cursor: pointer;
-      transition: background 0.2s;
-    }
+      .btn-primary:hover {
+        background: var(--primary-hover);
+      }
 
-    .btn-primary:hover {
-      background: var(--primary-hover);
-    }
+      #statusMsg {
+        margin-top: 10px;
+        text-align: center;
+        font-size: 0.9rem;
+        min-height: 20px;
+      }
 
-    #statusMsg {
-      margin-top: 10px;
-      text-align: center;
-      font-size: 0.9rem;
-      min-height: 20px;
-    }
+      /* Web Installer Button Styling */
+      esp-web-install-button {
+        display: block;
+        width: 100%;
+      }
+    </style>
+  </head>
 
-    /* Web Installer Button Styling */
-    esp-web-install-button {
-      display: block;
-      width: 100%;
-    }
-  </style>
-</head>
+  <body>
+    <div class="header-actions">
+      <button class="lang-btn" onclick="toggleLang()">🇹🇷 TR / 🇬🇧 EN</button>
+    </div>
 
-<body>
-  <div class="header-actions">
-    <button class="lang-btn" onclick="toggleLang()">🇹🇷 TR / 🇬🇧 EN</button>
-  </div>
+    <div class="main-card">
+      <h1 id="title">DLSWeather Installer</h1>
+      <p class="subtitle" id="subtitle">
+        Install the latest firmware and configure your device in minutes.
+      </p>
 
-  <div class="main-card">
-    <h1 id="title">DLSWeather Installer</h1>
-    <p class="subtitle" id="subtitle">
-      Install the latest firmware and configure your device in minutes.
-    </p>
-
-    <!-- STEP 1 -->
-    <div class="step-container active">
-      <div class="step-title">
-        <span style="
+      <!-- STEP 1 -->
+      <div class="step-container active">
+        <div class="step-title">
+          <span
+            style="
               background: var(--primary);
               color: white;
               width: 24px;
@@ -203,44 +209,70 @@
               align-items: center;
               justify-content: center;
               font-size: 0.8rem;
-            ">1</span>
-        <span id="step1Title">Install Firmware</span>
-      </div>
-      <div class="step-desc" id="step1Desc">
-        Select your device type and connect via USB.
+            "
+            >1</span
+          >
+          <span id="step1Title">Install Firmware</span>
+        </div>
+        <div class="step-desc" id="step1Desc">
+          Select your device type and connect via USB.
+        </div>
+
+        <div class="input-group">
+          <label id="lblDevice">Device Type</label>
+          <select
+            id="deviceType"
+            onchange="updateManifest()"
+            style="
+              width: 100%;
+              padding: 10px;
+              border: 1px solid var(--border);
+              border-radius: 6px;
+              font-size: 1rem;
+              background: var(--surface);
+            "
+          >
+            <option value="esp32_wroom">Standard ESP32 (WROOM)</option>
+            <option value="esp32c3_super_mini">ESP32-C3 SuperMini</option>
+            <option value="esp32s3_super_mini">ESP32-S3 SuperMini</option>
+          </select>
+        </div>
+
+        <div class="input-group">
+          <label id="lblMode">Installation Mode</label>
+          <select
+            id="installMode"
+            onchange="updateMode()"
+            style="
+              width: 100%;
+              padding: 10px;
+              border: 1px solid var(--border);
+              border-radius: 6px;
+              font-size: 1rem;
+              background: var(--surface);
+            "
+          >
+            <option value="update">Update Only (Keep Settings)</option>
+            <option value="clean">Clean Install (Erase All)</option>
+          </select>
+        </div>
+
+        <div class="warning-box" id="modeWarning">
+          <span>ℹ️</span>
+          <span id="modeText">Update mode keeps your WiFi & Config.</span>
+        </div>
+
+        <esp-web-install-button
+          id="installBtn"
+          manifest="firmware/esp32_wroom/manifest.json"
+        ></esp-web-install-button>
       </div>
 
-      <div class="input-group">
-        <label id="lblDevice">Device Type</label>
-        <select id="deviceType" onchange="updateManifest()"
-          style="width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 1rem; background: var(--surface);">
-          <option value="esp32_wroom">Standard ESP32 (WROOM)</option>
-          <option value="esp32c3_super_mini">ESP32-C3 SuperMini</option>
-          <option value="esp32s3_super_mini">ESP32-S3 SuperMini</option>
-        </select>
-      </div>
-
-      <div class="input-group">
-        <label id="lblMode">Installation Mode</label>
-        <select id="installMode" onchange="updateMode()"
-          style="width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 1rem; background: var(--surface);">
-          <option value="update">Update Only (Keep Settings)</option>
-          <option value="clean">Clean Install (Erase All)</option>
-        </select>
-      </div>
-
-      <div class="warning-box" id="modeWarning">
-        <span>ℹ️</span>
-        <span id="modeText">Update mode keeps your WiFi & Config.</span>
-      </div>
-
-      <esp-web-install-button id="installBtn" manifest="firmware/esp32_wroom/manifest.json"></esp-web-install-button>
-    </div>
-
-    <!-- STEP 2 -->
-    <div class="step-container">
-      <div class="step-title">
-        <span style="
+      <!-- STEP 2 -->
+      <div class="step-container">
+        <div class="step-title">
+          <span
+            style="
               background: var(--primary);
               color: white;
               width: 24px;
@@ -250,340 +282,405 @@
               align-items: center;
               justify-content: center;
               font-size: 0.8rem;
-            ">2</span>
-        <span id="step2Title">Configure Device</span>
-      </div>
-      <div class="step-desc" id="step2Desc">
-        Enter your settings after installation completes.
-      </div>
-
-      <div class="input-group">
-        <label>Wi-Fi SSID</label>
-        <input type="text" id="ssid" placeholder="MyNetwork" />
-      </div>
-      <div class="input-group">
-        <label>Wi-Fi Password</label>
-        <input type="text" id="pass" placeholder="Password" />
-      </div>
-      <div class="input-group">
-        <label>API Key</label>
-        <input type="text" id="key" placeholder="dls_..." />
-      </div>
-      <div class="input-group">
-        <label>Station ID</label>
-        <input type="text" id="station" placeholder="ST-..." />
-      </div>
-      <div style="display: flex; gap: 10px">
-        <div class="input-group" style="flex: 1">
-          <label id="lblLat">Latitude</label>
-          <input type="text" id="lat" placeholder="41.0082" />
+            "
+            >2</span
+          >
+          <span id="step2Title">Configure Device</span>
         </div>
-        <div class="input-group" style="flex: 1">
-          <label id="lblLon">Longitude</label>
-          <input type="text" id="lon" placeholder="28.9784" />
+        <div class="step-desc" id="step2Desc">
+          Enter your settings after installation completes.
         </div>
-      </div>
 
-      <div class="input-group">
-        <label>Interval (Minutes)</label>
-        <select id="interval"
-          style="width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 1rem; background: var(--surface);">
-          <option value="15">15</option>
-          <option value="20">20</option>
-          <option value="25">25</option>
-          <option value="30" selected>30</option>
-        </select>
-      </div>
+        <div class="input-group">
+          <label>Wi-Fi SSID</label>
+          <input type="text" id="ssid" placeholder="MyNetwork" />
+        </div>
+        <div class="input-group">
+          <label>Wi-Fi Password</label>
+          <input type="text" id="pass" placeholder="Password" />
+        </div>
+        <div class="input-group">
+          <label>API Key</label>
+          <input type="text" id="api" placeholder="dls_..." />
+        </div>
+        <div class="input-group">
+          <label>Station ID</label>
+          <input type="text" id="station" placeholder="ST-..." />
+        </div>
+        <div style="display: flex; gap: 10px">
+          <div class="input-group" style="flex: 1">
+            <label id="lblLat">Latitude</label>
+            <input type="text" id="lat" placeholder="41.0082" />
+          </div>
+          <div class="input-group" style="flex: 1">
+            <label id="lblLon">Longitude</label>
+            <input type="text" id="lon" placeholder="28.9784" />
+          </div>
+        </div>
 
-      <div style="display: flex; gap: 10px; margin-top: 1rem;">
-        <button class="btn-primary" style="background-color: var(--success);" id="btnRead" onclick="readFromDevice()">
-          Read Settings
-        </button>
-        <button class="btn-primary" id="btnSend" onclick="saveToDevice()">
-          Save Settings
-        </button>
+        <div class="input-group">
+          <label>Interval (Minutes)</label>
+          <select
+            id="interval"
+            style="
+              width: 100%;
+              padding: 10px;
+              border: 1px solid var(--border);
+              border-radius: 6px;
+              font-size: 1rem;
+              background: var(--surface);
+            "
+          >
+            <option value="15">15</option>
+            <option value="20">20</option>
+            <option value="25">25</option>
+            <option value="30" selected>30</option>
+          </select>
+        </div>
+
+        <div style="display: flex; gap: 10px; margin-top: 1rem">
+          <button
+            class="btn-primary"
+            style="background-color: var(--success)"
+            id="btnRead"
+            onclick="readFromDevice()"
+          >
+            Read Settings
+          </button>
+          <button class="btn-primary" id="btnSend" onclick="saveToDevice()">
+            Save Settings
+          </button>
+        </div>
+        <div id="statusMsg"></div>
       </div>
-      <div id="statusMsg"></div>
     </div>
-  </div>
 
-  <script>
-    const translations = {
-      en: {
-        title: "DLSWeather Installer",
-        subtitle:
-          "Install the latest firmware and configure your device in minutes.",
-        step1Title: "Install Firmware",
-        step1Desc: "Connect your ESP32 via USB and click the button below.",
-        warningText:
-          '"Preparing installation" means <b>Erasing Flash</b>. This takes 10-60 seconds. Please be patient!',
-        step2Title: "Configure Device",
-        step2Desc: "Enter your settings after installation completes.",
-        btnRead: "Read Settings",
-        btnSend: "Save Settings",
-        lblLat: "Latitude",
-        lblLon: "Longitude",
-        lblDevice: "Device Type",
-        lblMode: "Installation Mode",
-        optUpdate: "Update Only (Keep Settings)",
-        optClean: "Clean Install (Erase All)",
-        modeUpdate: "Update mode keeps your WiFi & Config.",
-        modeClean: "⚠️ IMPORTANT: You MUST check 'Erase Device' in the popup!",
-        statusReq: "Requesting port...",
-        statusConn: "Connected! communicating...",
-        statusRead: "Reading configuration...",
-        statusSaved: "Configuration saved! Device restarting...",
-        statusErr: "Error: ",
-        alertFill: "Please fill in all configuration fields.",
-        alertBrowser: "Web Serial API not supported. Please use Chrome/Edge.",
-        btnInstall: "INSTALL DLSWEATHER",
-      },
-      tr: {
-        title: "DLSWeather Yükleyici",
-        subtitle:
-          "En son yazılımı yükleyin ve cihazınızı dakikalar içinde ayarlayın.",
-        step1Title: "Yazılımı Yükle",
-        step1Desc:
-          "ESP32'nizi USB ile bağlayın ve aşağıdaki butona tıklayın.",
-        warningText:
-          '"Preparing installation" aşaması <b>Flash Silme</b> işlemidir. 10-60 saniye sürebilir. Lütfen bekleyin!',
-        step2Title: "Cihazı Ayarla",
-        step2Desc: "Yükleme tamamlandıktan sonra ayarlarınızı girin.",
-        btnRead: "Ayarları Oku",
-        btnSend: "Ayarları Kaydet",
-        lblLat: "Enlem (Lat)",
-        lblLon: "Boylam (Lon)",
-        lblDevice: "Cihaz Tipi",
-        lblMode: "Yükleme Modu",
-        optUpdate: "Sadece Güncelle (Ayarları Koru)",
-        optClean: "Temiz Kurulum (Her Şeyi Sil)",
-        modeUpdate: "Güncelleme modu WiFi ve ayarlarınızı korur.",
-        modeClean: "⚠️ ÖNEMLİ: Açılan pencerede 'Erase Device' seçeneğini işaretlemelisiniz!",
-        statusReq: "Port isteniyor...",
-        statusConn: "Bağlandı! Haberleşiliyor...",
-        statusRead: "Ayarlar okunuyor...",
-        statusSaved: "Ayarlar kaydedildi! Cihaz yeniden başlıyor...",
-        statusErr: "Hata: ",
-        alertFill: "Lütfen tüm ayar alanlarını doldurun.",
-        alertBrowser:
-          "Web Serial API desteklenmiyor. Chrome veya Edge kullanın.",
-        btnInstall: "YÜKLE",
-      },
-    };
+    <script>
+      const translations = {
+        en: {
+          title: "DLSWeather Installer",
+          subtitle:
+            "Install the latest firmware and configure your device in minutes.",
+          step1Title: "Install Firmware",
+          step1Desc: "Connect your ESP32 via USB and click the button below.",
+          warningText:
+            '"Preparing installation" means <b>Erasing Flash</b>. This takes 10-60 seconds. Please be patient!',
+          step2Title: "Configure Device",
+          step2Desc: "Enter your settings after installation completes.",
+          btnRead: "Read Settings",
+          btnSend: "Save Settings",
+          lblLat: "Latitude",
+          lblLon: "Longitude",
+          lblDevice: "Device Type",
+          lblMode: "Installation Mode",
+          optUpdate: "Update Only (Keep Settings)",
+          optClean: "Clean Install (Erase All)",
+          modeUpdate: "Update mode keeps your WiFi & Config.",
+          modeClean:
+            "⚠️ IMPORTANT: You MUST check 'Erase Device' in the popup!",
+          statusReq: "Requesting port...",
+          statusConn: "Connected! communicating...",
+          statusRead: "Reading configuration...",
+          statusSaved: "Configuration saved! Device restarting...",
+          statusErr: "Error: ",
+          alertFill: "Please fill in all configuration fields.",
+          alertBrowser: "Web Serial API not supported. Please use Chrome/Edge.",
+          btnInstall: "INSTALL DLSWEATHER",
+        },
+        tr: {
+          title: "DLSWeather Yükleyici",
+          subtitle:
+            "En son yazılımı yükleyin ve cihazınızı dakikalar içinde ayarlayın.",
+          step1Title: "Yazılımı Yükle",
+          step1Desc:
+            "ESP32'nizi USB ile bağlayın ve aşağıdaki butona tıklayın.",
+          warningText:
+            '"Preparing installation" aşaması <b>Flash Silme</b> işlemidir. 10-60 saniye sürebilir. Lütfen bekleyin!',
+          step2Title: "Cihazı Ayarla",
+          step2Desc: "Yükleme tamamlandıktan sonra ayarlarınızı girin.",
+          btnRead: "Ayarları Oku",
+          btnSend: "Ayarları Kaydet",
+          lblLat: "Enlem (Lat)",
+          lblLon: "Boylam (Lon)",
+          lblDevice: "Cihaz Tipi",
+          lblMode: "Yükleme Modu",
+          optUpdate: "Sadece Güncelle (Ayarları Koru)",
+          optClean: "Temiz Kurulum (Her Şeyi Sil)",
+          modeUpdate: "Güncelleme modu WiFi ve ayarlarınızı korur.",
+          modeClean:
+            "⚠️ ÖNEMLİ: Açılan pencerede 'Erase Device' seçeneğini işaretlemelisiniz!",
+          statusReq: "Port isteniyor...",
+          statusConn: "Bağlandı! Haberleşiliyor...",
+          statusRead: "Ayarlar okunuyor...",
+          statusSaved: "Ayarlar kaydedildi! Cihaz yeniden başlıyor...",
+          statusErr: "Hata: ",
+          alertFill: "Lütfen tüm ayar alanlarını doldurun.",
+          alertBrowser:
+            "Web Serial API desteklenmiyor. Chrome veya Edge kullanın.",
+          btnInstall: "YÜKLE",
+        },
+      };
 
-    let currentLang = "en";
+      let currentLang = "en";
 
-    function toggleLang() {
-      currentLang = currentLang === "en" ? "tr" : "en";
+      function toggleLang() {
+        currentLang = currentLang === "en" ? "tr" : "en";
+        updateTexts();
+      }
+
+      function updateTexts() {
+        const t = translations[currentLang];
+        document.getElementById("title").innerText = t.title;
+        document.getElementById("subtitle").innerText = t.subtitle;
+        document.getElementById("step1Title").innerText = t.step1Title;
+        document.getElementById("step1Desc").innerText = t.step1Desc;
+        //   document.getElementById("warningText").innerHTML = t.warningText; // Removed static warning
+        document.getElementById("step2Title").innerText = t.step2Title;
+        document.getElementById("step2Desc").innerText = t.step2Desc;
+        document.getElementById("btnRead").innerText = t.btnRead;
+        document.getElementById("btnSend").innerText = t.btnSend;
+        document.getElementById("lblLat").innerText = t.lblLat;
+        document.getElementById("lblLon").innerText = t.lblLon;
+
+        document.getElementById("lblDevice").innerText = t.lblDevice;
+        document.getElementById("lblMode").innerText = t.lblMode;
+
+        // Update Select Options
+        const selMode = document.getElementById("installMode");
+        selMode.options[0].text = t.optUpdate;
+        selMode.options[1].text = t.optClean;
+
+        updateMode(); // Update warning text
+      }
+
+      function updateManifest() {
+        const dev = document.getElementById("deviceType").value;
+        const btn = document.getElementById("installBtn");
+        btn.setAttribute("manifest", "firmware/" + dev + "/manifest.json");
+      }
+
+      function updateMode() {
+        const mode = document.getElementById("installMode").value;
+        const note = document.getElementById("modeText");
+        const t = translations[currentLang];
+
+        if (mode === "clean") {
+          note.innerText = t.modeClean;
+          document.getElementById("modeWarning").style.borderColor = "#ef4444"; // Red
+          document.getElementById("modeWarning").style.backgroundColor =
+            "#fef2f2";
+          document.getElementById("modeWarning").style.color = "#b91c1c";
+        } else {
+          note.innerText = t.modeUpdate;
+          document.getElementById("modeWarning").style.borderColor = "#2563eb"; // Blue
+          document.getElementById("modeWarning").style.backgroundColor =
+            "#eff6ff";
+          document.getElementById("modeWarning").style.color = "#1e40af";
+        }
+      }
+
       updateTexts();
-    }
 
-    function updateTexts() {
-      const t = translations[currentLang];
-      document.getElementById("title").innerText = t.title;
-      document.getElementById("subtitle").innerText = t.subtitle;
-      document.getElementById("step1Title").innerText = t.step1Title;
-      document.getElementById("step1Desc").innerText = t.step1Desc;
-      //   document.getElementById("warningText").innerHTML = t.warningText; // Removed static warning
-      document.getElementById("step2Title").innerText = t.step2Title;
-      document.getElementById("step2Desc").innerText = t.step2Desc;
-      document.getElementById("btnRead").innerText = t.btnRead;
-      document.getElementById("btnSend").innerText = t.btnSend;
-      document.getElementById("lblLat").innerText = t.lblLat;
-      document.getElementById("lblLon").innerText = t.lblLon;
+      // --- SERIAL LOGIC ---
+      let port;
+      let reader;
+      let inputDone;
+      let outputDone;
+      let inputStream;
+      let outputStream;
 
-      document.getElementById("lblDevice").innerText = t.lblDevice;
-      document.getElementById("lblMode").innerText = t.lblMode;
-
-      // Update Select Options
-      const selMode = document.getElementById("installMode");
-      selMode.options[0].text = t.optUpdate;
-      selMode.options[1].text = t.optClean;
-
-      updateMode(); // Update warning text
-    }
-
-    function updateManifest() {
-      const dev = document.getElementById("deviceType").value;
-      const btn = document.getElementById("installBtn");
-      btn.setAttribute("manifest", "firmware/" + dev + "/manifest.json");
-    }
-
-    function updateMode() {
-      const mode = document.getElementById("installMode").value;
-      const note = document.getElementById("modeText");
-      const t = translations[currentLang];
-
-      if (mode === "clean") {
-        note.innerText = t.modeClean;
-        document.getElementById("modeWarning").style.borderColor = "#ef4444"; // Red
-        document.getElementById("modeWarning").style.backgroundColor = "#fef2f2";
-        document.getElementById("modeWarning").style.color = "#b91c1c";
-      } else {
-        note.innerText = t.modeUpdate;
-        document.getElementById("modeWarning").style.borderColor = "#2563eb"; // Blue
-        document.getElementById("modeWarning").style.backgroundColor = "#eff6ff";
-        document.getElementById("modeWarning").style.color = "#1e40af";
+      async function connectSerial() {
+        try {
+          port = await navigator.serial.requestPort();
+          await port.open({ baudRate: 115200 });
+          return true;
+        } catch (e) {
+          console.error(e);
+          return false;
+        }
       }
-    }
 
-    updateTexts();
+      async function readFromDevice() {
+        const t = translations[currentLang];
+        const status = document.getElementById("statusMsg");
 
-    // --- SERIAL LOGIC ---
-    let port;
-    let reader;
-    let inputDone;
-    let outputDone;
-    let inputStream;
-    let outputStream;
-
-    async function connectSerial() {
-      try {
-        port = await navigator.serial.requestPort();
-        await port.open({ baudRate: 115200 });
-        return true;
-      } catch (e) {
-        console.error(e);
-        return false;
-      }
-    }
-
-    async function readFromDevice() {
-      const t = translations[currentLang];
-      const status = document.getElementById("statusMsg");
-
-      if (!navigator.serial) { alert(t.alertBrowser); return; }
-
-      try {
-        status.innerText = t.statusReq;
-        if (!port || !port.readable) {
-          if (!await connectSerial()) return;
+        if (!navigator.serial) {
+          alert(t.alertBrowser);
+          return;
         }
 
-        status.innerText = t.statusRead;
-        status.style.color = "var(--primary)";
+        try {
+          status.innerText = t.statusReq;
+          if (!port || !port.readable) {
+            if (!(await connectSerial())) return;
+          }
 
-        // Send GET_CONFIG
-        const encoder = new TextEncoder();
-        const writer = port.writable.getWriter();
-        await writer.write(encoder.encode("GET_CONFIG\n"));
-        writer.releaseLock();
+          status.innerText = t.statusRead;
+          status.style.color = "var(--primary)";
 
-        // Read Response
-        // We need a simple line reader
-        const decoder = new TextDecoder();
-        reader = port.readable.getReader();
-        let buffer = "";
+          // Send GET_CONFIG
+          const encoder = new TextEncoder();
+          const writer = port.writable.getWriter();
+          await writer.write(encoder.encode("GET_CONFIG\n"));
+          writer.releaseLock();
 
-        // Read loop until we get valid JSON or timeout
-        // A simple timeout mechanism
-        const timeout = setTimeout(() => {
-          reader.cancel();
-          status.innerText = t.statusErr + " Timeout";
-        }, 5000);
+          // Read Response
+          // We need a simple line reader
+          const decoder = new TextDecoder();
+          reader = port.readable.getReader();
+          let buffer = "";
 
-        while (true) {
-          const { value, done } = await reader.read();
-          if (done) break;
-          buffer += decoder.decode(value);
+          // Read loop until we get valid JSON or timeout
+          // A simple timeout mechanism
+          const timeout = setTimeout(() => {
+            reader.cancel();
+            status.innerText = t.statusErr + " Timeout";
+          }, 5000);
 
-          // Checks for newline
-          if (buffer.includes("}")) { // Rough check for JSON end
-            // try parse
-            try {
-              // Extract potential JSON object (simple heuristic: look for { ... })
-              const start = buffer.indexOf('{');
-              const end = buffer.lastIndexOf('}');
-              if (start !== -1 && end !== -1 && end > start) {
-                const jsonStr = buffer.substring(start, end + 1);
-                const data = JSON.parse(jsonStr);
+          while (true) {
+            const { value, done } = await reader.read();
+            if (done) break;
+            buffer += decoder.decode(value);
 
-                // Fill Form
-                if (data.ssid) document.getElementById("ssid").value = data.ssid;
-                if (data.pass) document.getElementById("pass").value = data.pass;
-                if (data.api) document.getElementById("key").value = data.api;
-                if (data.station) document.getElementById("station").value = data.station;
-                if (data.lat) document.getElementById("lat").value = data.lat;
-                if (data.lon) document.getElementById("lon").value = data.lon;
-                if (data.interval) document.getElementById("interval").value = data.interval;
+            // Checks for newline
+            if (buffer.includes("}")) {
+              // Rough check for JSON end
+              // try parse
+              try {
+                // Extract potential JSON object (simple heuristic: look for { ... })
+                const start = buffer.indexOf("{");
+                const end = buffer.lastIndexOf("}");
+                if (start !== -1 && end !== -1 && end > start) {
+                  const jsonStr = buffer.substring(start, end + 1);
+                  const data = JSON.parse(jsonStr);
 
-                status.innerText = "OK";
-                status.style.color = "var(--success)";
-                clearTimeout(timeout);
+                  // Fill Form
+                  if (data.ssid)
+                    document.getElementById("ssid").value = data.ssid;
+                  if (data.pass)
+                    document.getElementById("pass").value = data.pass;
+                  if (data.api) document.getElementById("api").value = data.api;
+                  if (data.station)
+                    document.getElementById("station").value = data.station;
+                  if (data.lat) document.getElementById("lat").value = data.lat;
+                  if (data.lon) document.getElementById("lon").value = data.lon;
+                  if (data.interval)
+                    document.getElementById("interval").value = data.interval;
+
+                  status.innerText = "OK";
+                  status.style.color = "var(--success)";
+                  clearTimeout(timeout);
+                  break;
+                }
+              } catch (e) {
+                /* ignore partials */
+              }
+            }
+          }
+          reader.releaseLock();
+          // Keep port open or close? Typically close to release resource for monitor
+          await port.close();
+        } catch (e) {
+          console.error(e);
+          status.innerText = t.statusErr + e.message;
+          status.style.color = "var(--warning)";
+        }
+      }
+
+      async function saveToDevice() {
+        const ssid = document.getElementById("ssid").value;
+        const pass = document.getElementById("pass").value;
+        const key = document.getElementById("api").value;
+        const station = document.getElementById("station").value;
+        const lat = document.getElementById("lat").value;
+        const lon = document.getElementById("lon").value;
+        const interval = document.getElementById("interval").value;
+
+        const t = translations[currentLang];
+        const status = document.getElementById("statusMsg");
+
+        if (!ssid || !pass || !key || !station) {
+          alert(t.alertFill);
+          return;
+        }
+
+        if (!navigator.serial) {
+          alert(t.alertBrowser);
+          return;
+        }
+
+        try {
+          status.innerText = t.statusReq;
+          if (!port || !port.writable) {
+            if (!(await connectSerial())) return;
+          }
+
+          status.innerText = "Device restarting..."; // Optimistic message
+
+          const config = {
+            ssid: ssid,
+            pass: pass,
+            api: key,
+            station: station,
+            lat: parseFloat(lat || 0),
+            lon: parseFloat(lon || 0),
+            interval: parseInt(interval || 30),
+          };
+
+          const cmd = "SET_CONFIG " + JSON.stringify(config) + "\n";
+
+          const encoder = new TextEncoder();
+          const writer = port.writable.getWriter();
+          await writer.write(encoder.encode(cmd));
+          writer.releaseLock();
+
+          // --- NEW: Wait for Confirmation ---
+          status.innerText = "Waiting for device confirmation...";
+
+          const decoder = new TextDecoder();
+          reader = port.readable.getReader();
+          let buffer = "";
+          let success = false;
+
+          // Wait up to 5 seconds for "CONFIG_SAVED"
+          const timeout = setTimeout(() => {
+            reader.cancel();
+          }, 5000);
+
+          try {
+            while (true) {
+              const { value, done } = await reader.read();
+              if (done) break;
+              buffer += decoder.decode(value);
+              if (buffer.includes("CONFIG_SAVED")) {
+                success = true;
+                reader.cancel(); // Stop reading
                 break;
               }
-            } catch (e) { /* ignore partials */ }
+            }
+          } catch (e) {
+            /* Cancelled or error */
+          } finally {
+            reader.releaseLock();
+            clearTimeout(timeout);
           }
+
+          if (success) {
+            status.innerText = t.statusSaved;
+            status.style.color = "var(--success)";
+            setTimeout(async () => {
+              await port.close();
+            }, 2000);
+          } else {
+            status.innerText = t.statusErr + "No confirmation from device!";
+            status.style.color = "var(--warning)";
+          }
+        } catch (e) {
+          console.error(e);
+          status.innerText = t.statusErr + e.message;
+          status.style.color = "var(--warning)";
         }
-        reader.releaseLock();
-        // Keep port open or close? Typically close to release resource for monitor
-        await port.close();
-
-      } catch (e) {
-        console.error(e);
-        status.innerText = t.statusErr + e.message;
-        status.style.color = "var(--warning)";
       }
-    }
-
-    async function saveToDevice() {
-      const ssid = document.getElementById("ssid").value;
-      const pass = document.getElementById("pass").value;
-      const key = document.getElementById("key").value;
-      const station = document.getElementById("station").value;
-      const lat = document.getElementById("lat").value;
-      const lon = document.getElementById("lon").value;
-      const interval = document.getElementById("interval").value;
-
-      const t = translations[currentLang];
-      const status = document.getElementById("statusMsg");
-
-      if (!ssid || !pass || !key || !station) {
-        alert(t.alertFill);
-        return;
-      }
-
-      if (!navigator.serial) { alert(t.alertBrowser); return; }
-
-      try {
-        status.innerText = t.statusReq;
-        if (!port || !port.writable) {
-          if (!await connectSerial()) return;
-        }
-
-        status.innerText = "Device restarting..."; // Optimistic message
-
-        const config = {
-          ssid: ssid,
-          pass: pass,
-          api: key,
-          station: station,
-          lat: parseFloat(lat || 0),
-          lon: parseFloat(lon || 0),
-          interval: parseInt(interval || 30)
-        };
-
-        const cmd = "SET_CONFIG " + JSON.stringify(config) + "\n";
-
-        const encoder = new TextEncoder();
-        const writer = port.writable.getWriter();
-        await writer.write(encoder.encode(cmd));
-        writer.releaseLock();
-
-        status.innerText = t.statusSaved;
-        status.style.color = "var(--success)";
-
-        setTimeout(async () => {
-          await port.close();
-        }, 2000);
-
-      } catch (e) {
-        console.error(e);
-        status.innerText = t.statusErr + e.message;
-        status.style.color = "var(--warning)";
-      }
-    }
-  </script>
-</body>
-
+    </script>
+  </body>
 </html>
