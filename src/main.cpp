@@ -7,6 +7,8 @@
 #include "NetworkManager/DLSNetwork.h"
 #include "Display/Display.h"
 #include "Config/Config.h"
+#include <esp_sleep.h>
+#include <esp_system.h>
 
 // --- NESNELER ---
 Config config;
@@ -32,6 +34,8 @@ int lastSentMinute = -1;
 bool firstRun = true;
 unsigned long lastAttemptTime = 0;
 bool pendingRetry = false;
+bool isFromSleep = false;
+unsigned long bootTime = 0;
 
 // --- API handlers ---
 void handleWeatherAPI() {
@@ -92,6 +96,11 @@ void setup() {
     delay(2000);
     // 1. Ayarlari Yukle
     config.begin();
+
+    // Check reset reason
+    isFromSleep = (esp_reset_reason() == ESP_RST_DEEPSLEEP);
+    bootTime = millis();
+
     config.checkSerialCommands(); // Boot sirasinda komut yakalama sansi
 
     Serial.println("\n--- Yuklu Ayarlar ---");
@@ -173,7 +182,25 @@ void loop() {
     bool shouldAttempt = false;
 
     if (firstRun) {
-        shouldAttempt = true;
+        // Deep Sleep aktifse ve cihaz yeni açılmışsa (uykudan uyanmamışsa),
+        // ilk veriyi göndermeden önce 5 dakika bekle. Bu yapılandırma penceresidir.
+        if (config.isDeepSleepEnabled() && !isFromSleep) {
+            if (millis() - bootTime > 300000) {
+                shouldAttempt = true;
+                Serial.println("\n[DeepSleep] Startup delay finished. Triggering first broadcast.");
+            } else {
+                static unsigned long lastMsg = 0;
+                if (millis() - lastMsg > 60000) {
+                    lastMsg = millis();
+                    Serial.print("[DeepSleep] Waiting for config window... ");
+                    Serial.print((300000 - (millis() - bootTime)) / 1000);
+                    Serial.println("s remaining.");
+                }
+            }
+        } else {
+            // Not in deep sleep or returned from sleep, send immediately
+            shouldAttempt = true;
+        }
     } else if (isScheduledTime) {
         shouldAttempt = true;
     } else if (pendingRetry && (millis() - lastAttemptTime > 60000)) {
@@ -257,6 +284,30 @@ void loop() {
                 lastSentMinute = currentMinute;
                 firstRun = false; 
                 pendingRetry = false;
+
+                // --- DEEP SLEEP CHECK ---
+                if (config.isDeepSleepEnabled()) {
+                    int interval = config.getInterval();
+                    if (interval <= 0) interval = 30; // Safety
+
+                    // Wake up 2 minutes early to prepare
+                    int sleepMinutes = interval - 2;
+                    if (sleepMinutes < 1) sleepMinutes = 1; // Minimum 1 minute sleep
+
+                    Serial.print("\n[DeepSleep] Scheduled for ");
+                    Serial.print(interval);
+                    Serial.print(" mins. Entering sleep for ");
+                    Serial.print(sleepMinutes);
+                    Serial.println(" mins (-2m early wake)... ");
+                    
+                    display.setStatus("Sleeping...");
+                    display.update();
+                    delay(2000); // Give time for display/serial
+                    
+                    // ESP32 deep sleep takes microseconds
+                    esp_sleep_enable_timer_wakeup((uint64_t)sleepMinutes * 60 * 1000000);
+                    esp_deep_sleep_start();
+                }
             } else {
                 int errCode = dls->getLastCode();
                 Serial.print("[Retry] Gonderme hatasi! Kod: "); Serial.println(errCode);

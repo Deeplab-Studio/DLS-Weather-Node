@@ -9,6 +9,7 @@ Config::Config() {
     _lat = 0.0;
     _lon = 0.0;
     _intervalMin = 30; // Default 30 mins
+    _isDeepSleepEnabled = false;
 }
 
 void Config::begin() {
@@ -24,6 +25,7 @@ void Config::load() {
     _lat = _prefs.getFloat("lat", _lat);
     _lon = _prefs.getFloat("lon", _lon);
     _intervalMin = _prefs.getInt("interval", _intervalMin);
+    _isDeepSleepEnabled = _prefs.getBool("deepsleep", _isDeepSleepEnabled);
 }
 
 void Config::checkSerialCommands() {
@@ -41,6 +43,7 @@ void Config::checkSerialCommands() {
             doc["lat"] = _lat;
             doc["lon"] = _lon;
             doc["interval"] = _intervalMin;
+            doc["deepSleep"] = _isDeepSleepEnabled;
             
             String response;
             serializeJson(doc, response);
@@ -59,6 +62,7 @@ void Config::checkSerialCommands() {
                 if (doc.containsKey("lat")) _lat = doc["lat"].as<float>();
                 if (doc.containsKey("lon")) _lon = doc["lon"].as<float>();
                 if (doc.containsKey("interval")) _intervalMin = doc["interval"].as<int>();
+                if (doc.containsKey("deepSleep")) _isDeepSleepEnabled = doc["deepSleep"].as<bool>();
                 
                 // Save all
                 _prefs.putString("ssid", _ssid);
@@ -68,6 +72,7 @@ void Config::checkSerialCommands() {
                 _prefs.putFloat("lat", _lat);
                 _prefs.putFloat("lon", _lon);
                 _prefs.putInt("interval", _intervalMin);
+                _prefs.putBool("deepsleep", _isDeepSleepEnabled);
                 
                 Serial.println("CONFIG_SAVED");
                 delay(500);
@@ -105,4 +110,5 @@ void Config::info() {
     Serial.println("Lat: " + String(_lat, 6));
     Serial.println("Lon: " + String(_lon, 6));
     Serial.println("Interval: " + String(_intervalMin) + " dk");
+    Serial.println("Deep Sleep: " + String(_isDeepSleepEnabled ? "Aktif" : "Pasif"));
 }

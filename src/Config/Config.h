@@ -17,6 +17,7 @@ public:
     float getLat() const { return _lat; }
     float getLon() const { return _lon; }
     int getInterval() const { return _intervalMin; }
+    bool isDeepSleepEnabled() const { return _isDeepSleepEnabled; }
 
 private:
     Preferences _prefs;
@@ -29,6 +30,7 @@ private:
     float _lat;
     float _lon;
     int _intervalMin;
+    bool _isDeepSleepEnabled;
 
     void load();
     void info();

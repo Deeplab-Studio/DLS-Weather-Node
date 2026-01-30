@@ -252,14 +252,16 @@
               background: var(--surface);
             "
           >
-            <option value="update">Update Only (Keep Settings)</option>
             <option value="clean">Clean Install (Erase All)</option>
+            <option value="update">Update Only (Keep Settings)</option>
           </select>
         </div>
 
         <div class="warning-box" id="modeWarning">
           <span>ℹ️</span>
-          <span id="modeText">Update mode keeps your WiFi & Config.</span>
+          <span id="modeText"
+            >⚠️ IMPORTANT: You MUST check 'Erase Device' in the popup!</span
+          >
         </div>
 
         <esp-web-install-button
@@ -338,6 +340,24 @@
           </select>
         </div>
 
+        <div class="input-group">
+          <label id="lblDeepSleep">Deep Sleep Mode</label>
+          <select
+            id="deepSleep"
+            style="
+              width: 100%;
+              padding: 10px;
+              border: 1px solid var(--border);
+              border-radius: 6px;
+              font-size: 1rem;
+              background: var(--surface);
+            "
+          >
+            <option value="false">Off (Personal Use / Indoor)</option>
+            <option value="true">On (Battery / Rooftop)</option>
+          </select>
+        </div>
+
         <div style="display: flex; gap: 10px; margin-top: 1rem">
           <button
             class="btn-primary"
@@ -386,6 +406,9 @@
           alertFill: "Please fill in all configuration fields.",
           alertBrowser: "Web Serial API not supported. Please use Chrome/Edge.",
           btnInstall: "INSTALL DLSWEATHER",
+          lblDeepSleep: "Deep Sleep Mode",
+          optSleepOn: "On (Battery / Rooftop)",
+          optSleepOff: "Off (Personal Use / Indoor)",
         },
         tr: {
           title: "DLSWeather Yükleyici",
@@ -418,6 +441,9 @@
           alertBrowser:
             "Web Serial API desteklenmiyor. Chrome veya Edge kullanın.",
           btnInstall: "YÜKLE",
+          lblDeepSleep: "Derin Uyku (Deep Sleep)",
+          optSleepOn: "Açık (Batarya / Çatı Tipi)",
+          optSleepOff: "Kapalı (Sürekli Güç / İç Mekan)",
         },
       };
 
@@ -442,13 +468,16 @@
         document.getElementById("lblLat").innerText = t.lblLat;
         document.getElementById("lblLon").innerText = t.lblLon;
 
-        document.getElementById("lblDevice").innerText = t.lblDevice;
-        document.getElementById("lblMode").innerText = t.lblMode;
+        document.getElementById("lblDeepSleep").innerText = t.lblDeepSleep;
 
         // Update Select Options
         const selMode = document.getElementById("installMode");
-        selMode.options[0].text = t.optUpdate;
-        selMode.options[1].text = t.optClean;
+        selMode.options[0].text = t.optClean;
+        selMode.options[1].text = t.optUpdate;
+
+        const selSleep = document.getElementById("deepSleep");
+        selSleep.options[0].text = t.optSleepOff;
+        selSleep.options[1].text = t.optSleepOn;
 
         updateMode(); // Update warning text
       }
@@ -566,6 +595,9 @@
                   if (data.lon) document.getElementById("lon").value = data.lon;
                   if (data.interval)
                     document.getElementById("interval").value = data.interval;
+                  if (data.deepSleep !== undefined)
+                    document.getElementById("deepSleep").value =
+                      data.deepSleep.toString();
 
                   status.innerText = "OK";
                   status.style.color = "var(--success)";
@@ -595,6 +627,7 @@
         const lat = document.getElementById("lat").value;
         const lon = document.getElementById("lon").value;
         const interval = document.getElementById("interval").value;
+        const deepSleep = document.getElementById("deepSleep").value === "true";
 
         const t = translations[currentLang];
         const status = document.getElementById("statusMsg");
@@ -625,6 +658,7 @@
             lat: parseFloat(lat || 0),
             lon: parseFloat(lon || 0),
             interval: parseInt(interval || 30),
+            deepSleep: deepSleep,
           };
 
           const cmd = "SET_CONFIG " + JSON.stringify(config) + "\n";
