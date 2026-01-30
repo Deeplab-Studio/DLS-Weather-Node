@@ -1,0 +1,15 @@
+{
+    "name": "DLS Weather Node (Update) - esp32s3_super_mini",
+    "version": "1.0.2",
+    "builds": [
+        {
+            "chipFamily": "ESP32S3C1",
+            "parts": [
+                {
+                    "path": "firmware.bin",
+                    "offset": 65536
+                }
+            ]
+        }
+    ]
+}
