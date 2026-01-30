@@ -8,3 +8,6 @@
 // I2C Pins (Default for ESP32C3)
 #define I2C_SDA 8
 #define I2C_SCL 9
+
+// Sensor Power Control (MOSFET)
+#define SENSOR_PWR_PIN 10

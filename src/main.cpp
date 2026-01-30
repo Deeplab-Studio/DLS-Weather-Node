@@ -92,8 +92,12 @@ void handleNotFound() {
 }
 
 void setup() {
+    // 0. SENSOR POWER ON (MOSFET)
+    pinMode(SENSOR_PWR_PIN, OUTPUT);
+    digitalWrite(SENSOR_PWR_PIN, HIGH);
+    
     Serial.begin(115200);
-    delay(2000);
+    delay(3000); // Give sensors and serial time to stabilize
     // 1. Ayarlari Yukle
     config.begin();
 
@@ -196,9 +200,17 @@ void loop() {
                     Serial.print((300000 - (millis() - bootTime)) / 1000);
                     Serial.println("s remaining.");
                 }
+                // Ayar gelme ihtimaline karsi Web Server'i calistir
+                server.handleClient();
+            }
+        } else if (isFromSleep) {
+            // Uykudan uyanmissak, tam vaktini bekleyelim (429 hatasini onlemek icin)
+            if (currentMinute % interval == 0) {
+                shouldAttempt = true;
+                Serial.println("\n[DeepSleep] Wake-up slot reached. Sending data.");
             }
         } else {
-            // Not in deep sleep or returned from sleep, send immediately
+            // Normal modda hemen basla
             shouldAttempt = true;
         }
     } else if (isScheduledTime) {
@@ -290,20 +302,28 @@ void loop() {
                     int interval = config.getInterval();
                     if (interval <= 0) interval = 30; // Safety
 
-                    // Wake up 2 minutes early to prepare
-                    int sleepMinutes = interval - 2;
-                    if (sleepMinutes < 1) sleepMinutes = 1; // Minimum 1 minute sleep
+                    // Calculate minutes until next slot
+                    int minutesToNext = interval - (currentMinute % interval);
+                    if (currentMinute % interval == 0) minutesToNext = interval; 
 
-                    Serial.print("\n[DeepSleep] Scheduled for ");
-                    Serial.print(interval);
-                    Serial.print(" mins. Entering sleep for ");
+                    // Full interval sleep as requested
+                    int sleepMinutes = minutesToNext;
+
+                    Serial.print("\n[DeepSleep] Target minute: ");
+                    Serial.print((currentMinute + minutesToNext) % 60);
+                    Serial.print(". Entering sleep for ");
                     Serial.print(sleepMinutes);
-                    Serial.println(" mins (-2m early wake)... ");
+                    Serial.println(" mins... ");
                     
                     display.setStatus("Sleeping...");
                     display.update();
                     delay(2000); // Give time for display/serial
                     
+                    display.off(); // Clear and turn off screen
+                    
+                    // SENSOR POWER OFF (MOSFET)
+                    digitalWrite(SENSOR_PWR_PIN, LOW);
+
                     // ESP32 deep sleep takes microseconds
                     esp_sleep_enable_timer_wakeup((uint64_t)sleepMinutes * 60 * 1000000);
                     esp_deep_sleep_start();

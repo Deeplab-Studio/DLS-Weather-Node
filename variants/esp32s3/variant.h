@@ -9,3 +9,6 @@
 // I2C Pins
 #define I2C_SDA 4
 #define I2C_SCL 5
+
+// Sensor Power Control (MOSFET)
+#define SENSOR_PWR_PIN 6

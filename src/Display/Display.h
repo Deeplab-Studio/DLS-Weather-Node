@@ -71,6 +71,9 @@ public:
     void printStartup(String ssid);
     void showMessage(String msg);
 
+    void off(); // Clear display and turn off
+    void on();  // Restore/Turn on
+
 private:
     DisplayType _type;
     Adafruit_SSD1306* _ssd1306;

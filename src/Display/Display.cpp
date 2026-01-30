@@ -302,6 +302,17 @@ void Display::showMessage(String msg) {
     display();
 }
 
+void Display::off() {
+    if (_type == DISP_NONE) return;
+    clear();
+    display(); // Make it black
+}
+
+void Display::on() {
+    if (_type == DISP_NONE) return;
+    update(); // Force a redraw to "turn on"
+}
+
 void Display::clear() {
     if (_type == DISP_SSD1306) _ssd1306->clearDisplay();
     else if (_type == DISP_SH1106) _sh1106->clearDisplay();
