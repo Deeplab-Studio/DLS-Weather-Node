@@ -213,15 +213,60 @@ void Display::drawLightPage() {
     else println("NaN");
 }
 
+// --- New UI Methods ---
+void Display::setStatus(String status, bool isError) {
+    _statusMsg = status;
+    _isStatusError = isError;
+    _statusTime = millis();
+}
+
+void Display::drawWifiIcon(int x, int y, bool connected) {
+    // Simplified: Circle Only
+    // Connected: Filled Circle (Radius 2)
+    // Disconnected: Empty Circle (Radius 2)
+    
+    // Draw Circle (Radius 2 -> 5px diam)
+    // Center at y+6. Footer starts ~55. Icon y=55. Center=61. Max Y=64.
+    // 61+2=63 (Fits). 
+    if (connected) {
+         if (_type == DISP_SSD1306) _ssd1306->fillCircle(x+6, y+6, 2, SSD1306_WHITE);
+         else if (_type == DISP_SH1106) _sh1106->fillCircle(x+6, y+6, 2, SH110X_WHITE);
+    } else {
+        // Empty circle for disconnected
+        if (_type == DISP_SSD1306) _ssd1306->drawCircle(x+6, y+6, 2, SSD1306_WHITE);
+        else if (_type == DISP_SH1106) _sh1106->drawCircle(x+6, y+6, 2, SH110X_WHITE);
+    }
+}
+
 void Display::drawFooter() {
     // Footer line
     if (_type == DISP_SSD1306) _ssd1306->drawLine(0, 54, 128, 54, SSD1306_WHITE);
     else if (_type == DISP_SH1106) _sh1106->drawLine(0, 54, 128, 54, SH110X_WHITE);
 
     setTextSize(1);
+    
+    // Left: Status Msg (e.g. "Sending...", "Success!", "HTTP:403")
     setCursor(0, 56);
-    print("Stat: "); 
-    println(_netData.status); // Use status string (Online/Offline) directly
+    if (_isStatusError) {
+        // Invert or just print?
+        print("ERR: "); print(_statusMsg);
+    } else {
+        if (_statusMsg.length() > 0) {
+             print(_statusMsg);
+             // Clear status after 5 sec if it is not an error?
+             // Or keep it? User wants "Sending.." then "Success".
+             // Let main reset it or timeouts? 
+             // For now, persistent until changed.
+        } else {
+             // Default if empty?
+             print("Stat: "); print(_netData.status); 
+        }
+    }
+    
+    // Right: WiFi Icon
+    // Screen width 128. Icon ~12px wide. 
+    // Position: 115, 55
+    drawWifiIcon(116, 55, _netData.connected);
 }
 
 // --- Helpers & Existing Wrappers ---

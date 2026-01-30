@@ -30,6 +30,8 @@ float latestRainDaily = -1.0;
 // --- DEGISKENLER ---
 int lastSentMinute = -1;
 bool firstRun = true;
+unsigned long lastAttemptTime = 0;
+bool pendingRetry = false;
 
 // --- API handlers ---
 void handleWeatherAPI() {
@@ -159,14 +161,25 @@ void loop() {
     int interval = config.getInterval(); 
     if (interval <= 0) interval = 30; // Guvenlik
 
-    // Veri Gonderimi
-    bool isTimeToSend = (currentMinute % interval == 0);
+    // Veri Gonderimi Karari
+    bool isScheduledTime = (currentMinute % interval == 0 && currentMinute != lastSentMinute);
+    bool shouldAttempt = false;
 
-    // İlk açılışta veya zamanı gelince (ve henüz bu dakikada göndermediysek)
-    if (firstRun || (isConnected && isTimeToSend && currentMinute != lastSentMinute)) {
+    if (firstRun) {
+        shouldAttempt = true;
+    } else if (isScheduledTime) {
+        shouldAttempt = true;
+    } else if (pendingRetry && (millis() - lastAttemptTime > 60000)) {
+        // Retry every 1 minute if failed (user requested 1 min for testing)
+        shouldAttempt = true;
+        Serial.println("\n[Retry] Re-attempting failed broadcast...");
+    }
+
+    if (shouldAttempt) {
+        lastAttemptTime = millis();
         if (firstRun) {
             Serial.println("\n--- Ilk Acilis Verisi Hazirlaniyor ---");
-        } else {
+        } else if (isScheduledTime) {
             Serial.println("\n--- Zamani Geldi, Veriler Okunuyor ---");
         }
         
@@ -226,17 +239,35 @@ void loop() {
              if (latestLight.uvIndex != -1.0) dls->uvIndex(latestLight.uvIndex);
         }
 
-        // --- 3. Gonderim ---
-        if (dls->send(network.getEpochTime())) {
-            Serial.println("Basariyla gonderildi.");
-            lastSentMinute = currentMinute;
-            firstRun = false; 
+        // --- 3. Gonderim (Sadece bagliysa) ---
+        if (isConnected) {
+            display.setStatus("Sending...");
+            display.update(); // Force update to show sending
+            
+            if (dls->send(network.getEpochTime())) {
+                Serial.println("Basariyla gonderildi.");
+                display.setStatus("Success!");
+                lastSentMinute = currentMinute;
+                firstRun = false; 
+                pendingRetry = false;
+            } else {
+                int errCode = dls->getLastCode();
+                Serial.print("[Retry] Gonderme hatasi! Kod: "); Serial.println(errCode);
+                
+                String errStr;
+                if (errCode == -1) errStr = "WiFi Err";
+                else if (errCode > 0) errStr = "HTTP " + String(errCode);
+                else errStr = "Conn Err";
+                
+                display.setStatus(errStr, true);
+                pendingRetry = true;
+                firstRun = false;
+            }
         } else {
-            Serial.println("Gonderme hatasi!");
-            // Eger network yoksa zaten bu bloga girmez (isConnected check above? No, firstRun skips isConnected check)
-            // But if firstRun and No Network, send() fails.
-             lastSentMinute = currentMinute; 
-             firstRun = false; 
+            Serial.println("[Retry] WiFi bagli degil! 1 dk sonra tekrar denenecek.");
+            display.setStatus("No WiFi", true);
+            pendingRetry = true;
+            firstRun = false;
         }
     } else {
         // If we are NOT sending data, we should still update sensors periodically 

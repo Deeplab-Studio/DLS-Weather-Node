@@ -66,6 +66,7 @@ public:
     void setRainData(float rate, float daily); 
     void setLightData(float uv, float lux);
     void setNetworkInfo(String ip, String ssid, String status, bool connected);
+    void setStatus(String status, bool isError = false); // New Status Bar method
 
     void printStartup(String ssid);
     void showMessage(String msg);
@@ -80,16 +81,22 @@ private:
     unsigned long _lastSwitchTime = 0;
     const unsigned long _pageDuration = 5000; // 5 seconds
 
-    // Data Store
+    // Data
     DispAirData _airData;
     DispWindData _windData;
     DispRainData _rainData;
     DispLightData _lightData;
     DispNetData _netData;
 
+    // Status Bar
+    String _statusMsg = "";
+    bool _isStatusError = false;
+    unsigned long _statusTime = 0;
+
     // Drawing Helpers
     void drawCenteredHeader(String title);
     void drawFooter();
+    void drawWifiIcon(int x, int y, bool connected);
     void drawAirPage();
     void drawWindPage();
     void drawRainPage();

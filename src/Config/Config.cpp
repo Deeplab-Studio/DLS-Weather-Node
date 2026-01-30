@@ -1,4 +1,5 @@
 #include "Config.h"
+#include <ArduinoJson.h>
 
 Config::Config() {
     _ssid = "WIFI_SSID_GIRIN";
@@ -30,51 +31,68 @@ void Config::checkSerialCommands() {
         String cmd = Serial.readStringUntil('\n');
         cmd.trim();
         
-        if (cmd.startsWith("ssid=")) {
+        // --- JSON BASED CONFIG ---
+        if (cmd.equals("GET_CONFIG")) {
+            JsonDocument doc;
+            doc["ssid"] = _ssid;
+            doc["pass"] = _pass;
+            doc["api"] = _apiKey;
+            doc["station"] = _stationId;
+            doc["lat"] = _lat;
+            doc["lon"] = _lon;
+            doc["interval"] = _intervalMin;
+            
+            String response;
+            serializeJson(doc, response);
+            Serial.println(response);
+        }
+        else if (cmd.startsWith("SET_CONFIG ")) {
+            String jsonStr = cmd.substring(11);
+            JsonDocument doc;
+            DeserializationError error = deserializeJson(doc, jsonStr);
+            
+            if (!error) {
+                if (doc.containsKey("ssid")) _ssid = doc["ssid"].as<String>();
+                if (doc.containsKey("pass")) _pass = doc["pass"].as<String>();
+                if (doc.containsKey("api")) _apiKey = doc["api"].as<String>();
+                if (doc.containsKey("station")) _stationId = doc["station"].as<String>();
+                if (doc.containsKey("lat")) _lat = doc["lat"].as<float>();
+                if (doc.containsKey("lon")) _lon = doc["lon"].as<float>();
+                if (doc.containsKey("interval")) _intervalMin = doc["interval"].as<int>();
+                
+                // Save all
+                _prefs.putString("ssid", _ssid);
+                _prefs.putString("pass", _pass);
+                _prefs.putString("api", _apiKey);
+                _prefs.putString("station", _stationId);
+                _prefs.putFloat("lat", _lat);
+                _prefs.putFloat("lon", _lon);
+                _prefs.putInt("interval", _intervalMin);
+                
+                Serial.println("CONFIG_SAVED");
+                delay(500);
+                ESP.restart();
+            } else {
+                Serial.println("JSON_ERROR");
+            }
+        }
+        // --- LEGACY COMMANDS (Optional fallback) ---
+        else if (cmd.startsWith("ssid=")) {
+            // ... (keep legacy if desired, but user wants JSON now) ...
+            // Let's keep basics for simple manual terminal usage
             String val = cmd.substring(5);
             _prefs.putString("ssid", val);
             _ssid = val;
             Serial.println("SSID Kaydedildi: " + val);
-        } else if (cmd.startsWith("pass=")) {
-            String val = cmd.substring(5);
-            _prefs.putString("pass", val);
-            _pass = val;
-            Serial.println("Sifre Kaydedildi.");
-        } else if (cmd.startsWith("api=")) {
-            String val = cmd.substring(4);
-            _prefs.putString("api", val);
-            _apiKey = val;
-            Serial.println("API Key Kaydedildi.");
-        } else if (cmd.startsWith("station=")) {
-            String val = cmd.substring(8);
-            _prefs.putString("station", val);
-            _stationId = val;
-            Serial.println("Station ID Kaydedildi.");
-        } else if (cmd.startsWith("lat=")) {
-            String valStr = cmd.substring(4);
-            valStr.replace(',', '.');
-            float val = valStr.toFloat();
-            _prefs.putFloat("lat", val);
-            _lat = val;
-            Serial.print("Lat Kaydedildi: "); Serial.println(val, 6);
-        } else if (cmd.startsWith("lon=")) {
-            String valStr = cmd.substring(4);
-            valStr.replace(',', '.');
-            float val = valStr.toFloat();
-            _prefs.putFloat("lon", val);
-            _lon = val;
-            Serial.print("Lon Kaydedildi: "); Serial.println(val, 6);
-        } else if (cmd.startsWith("interval=")) {
-            int val = cmd.substring(9).toInt();
-            if (val < 1) val = 1; 
-            _prefs.putInt("interval", val);
-            _intervalMin = val;
-            Serial.print("Interval Guncellendi (dk): "); Serial.println(val);
-        } else if (cmd.equalsIgnoreCase("restart")) {
+        } 
+        // ... (Simplified legacy blocks or remove if strictly JSON preferred) ...
+        // Keeping "restart" command for utility
+        else if (cmd.equalsIgnoreCase("restart")) {
             Serial.println("Yeniden baslatiliyor...");
             delay(1000);
             ESP.restart();
-        } else if (cmd.equalsIgnoreCase("info")) {
+        } 
+        else if (cmd.equalsIgnoreCase("info")) {
             info();
         }
     }

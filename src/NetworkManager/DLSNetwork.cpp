@@ -17,6 +17,7 @@ void DLSNetwork::begin(String ssid, String pass, int ledPin) {
     }
 
     Serial.print("Wi-Fi Baglaniyor...");
+    WiFi.mode(WIFI_STA);
     WiFi.begin(_ssid.c_str(), _pass.c_str());
 
     int attempt = 0;
@@ -48,10 +49,9 @@ void DLSNetwork::update() {
     if (WiFi.status() != WL_CONNECTED) {
         if (_ledPin != -1) digitalWrite(_ledPin, LOW);
         
-        if (millis() - _lastReconnectAttempt > 10000) {
+        if (millis() - _lastReconnectAttempt > 15000) {
             Serial.println("Wi-Fi Kopuk. Tekrar baglaniyor...");
-            WiFi.disconnect();
-            WiFi.reconnect();
+            WiFi.begin(_ssid.c_str(), _pass.c_str());
             _lastReconnectAttempt = millis();
         }
     } else {
