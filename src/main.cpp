@@ -1,244 +1,157 @@
-#include <WiFi.h>
-#include <WiFiUdp.h>
-#include <NTPClient.h>
 #include <Wire.h>
-#include <Preferences.h>
-#include <Adafruit_Sensor.h>
-#include <Adafruit_BMP280.h>
-#include <Adafruit_BME280.h>
-#include <Adafruit_BME680.h>
 #include "DLSWeather.h"
-
-// --- KONFIGURASYON ---
-const int LED_PIN = 2; // Çoğu ESP32'de dahili LED GPIO 2'dedir
-Preferences preferences;
-String _ssid = "WIFI_SSID_GIRIN";
-String _pass = "WIFI_SIFRE_GIRIN";
-String _apiKey = "API_KEY";
-String _stationId = "STATION_ID";
-float _lat = 0.0;
-float _lon = 0.0;
+#include "variant.h"
+#include "Sensor/Sensor.h"
+#include "NetworkManager/DLSNetwork.h"
+#include "Display/Display.h"
+#include "Config/Config.h"
 
 // --- NESNELER ---
+Config config;
 DLSWeather* dls;
-WiFiUDP ntpUDP;
-NTPClient timeClient(ntpUDP, "pool.ntp.org", 0, 60000);
+Sensor sensorManager;
+DLSNetwork network;
+Display display;
 
-// Sensor Nesneleri
-Adafruit_BMP280 bmp;
-Adafruit_BME280 bme;
-Adafruit_BME680 bme680;
-
-enum SensorType { NONE, BMP280, BME280, BME680 };
-SensorType foundSensor = NONE;
-
-unsigned long lastSendTime = 0;
+// --- DEGISKENLER ---
 int lastSentMinute = -1;
 bool firstRun = true;
 
-void checkSerialCommands() {
-    if (Serial.available()) {
-        String cmd = Serial.readStringUntil('\n');
-        cmd.trim();
-        
-        if (cmd.startsWith("ssid=")) {
-            String val = cmd.substring(5);
-            preferences.putString("ssid", val);
-            _ssid = val;
-            Serial.println("SSID Kaydedildi: " + val);
-        } else if (cmd.startsWith("pass=")) {
-            String val = cmd.substring(5);
-            preferences.putString("pass", val);
-            _pass = val;
-            Serial.println("Sifre Kaydedildi.");
-        } else if (cmd.startsWith("api=")) {
-            String val = cmd.substring(4);
-            preferences.putString("api", val);
-            _apiKey = val;
-            Serial.println("API Key Kaydedildi.");
-        } else if (cmd.startsWith("station=")) {
-            String val = cmd.substring(8);
-            preferences.putString("station", val);
-            _stationId = val;
-            Serial.println("Station ID Kaydedildi.");
-        } else if (cmd.startsWith("lat=")) {
-            String valStr = cmd.substring(4);
-            valStr.replace(',', '.');
-            float val = valStr.toFloat();
-            preferences.putFloat("lat", val);
-            _lat = val;
-            Serial.print("Lat Kaydedildi: ");
-            Serial.println(val, 6);
-        } else if (cmd.startsWith("lon=")) {
-            String valStr = cmd.substring(4);
-            valStr.replace(',', '.');
-            float val = valStr.toFloat();
-            preferences.putFloat("lon", val);
-            _lon = val;
-            Serial.print("Lon Kaydedildi: ");
-            Serial.println(val, 6);
-        } else if (cmd.equalsIgnoreCase("restart")) {
-            Serial.println("Yeniden baslatiliyor...");
-            delay(1000);
-            ESP.restart();
-        } else if (cmd.equalsIgnoreCase("info")) {
-            Serial.println("--- Mevcut Ayarlar ---");
-            Serial.println("SSID: " + _ssid);
-            Serial.println("Station: " + _stationId);
-            Serial.println("Lat: " + String(_lat, 6));
-            Serial.println("Lon: " + String(_lon, 6));
-        }
-    }
-}
-
-void loadPreferences() {
-    preferences.begin("dls-config", false);
-    _ssid = preferences.getString("ssid", _ssid);
-    _pass = preferences.getString("pass", _pass);
-    _apiKey = preferences.getString("api", _apiKey);
-    _stationId = preferences.getString("station", _stationId);
-    _lat = preferences.getFloat("lat", _lat);
-    _lon = preferences.getFloat("lon", _lon);
-}
-
-void detectSensor() {
-    Serial.println("\n--- Coklu Sensor Tarama Baslatildi ---");
-    Wire.begin(21, 22);
-
-    if (bme680.begin(0x76)) {
-        foundSensor = BME680;
-        Serial.println("SENSOR: BME680 Tespit Edildi!");
-        bme680.setTemperatureOversampling(BME680_OS_8X);
-        bme680.setHumidityOversampling(BME680_OS_2X);
-        bme680.setPressureOversampling(BME680_OS_4X);
-        bme680.setIIRFilterSize(BME680_FILTER_SIZE_3);
-        bme680.setGasHeater(320, 150);
-    } else if (bme.begin(0x76)) {
-        foundSensor = BME280;
-        Serial.println("SENSOR: BME280 Tespit Edildi!");
-    } else if (bmp.begin(0x76)) {
-        foundSensor = BMP280;
-        Serial.println("SENSOR: BMP280 Tespit Edildi!");
-    } else {
-        Serial.println("HATA: Hicbir sensor bulunamadi!");
-    }
-}
-
 void setup() {
     Serial.begin(115200);
-    pinMode(LED_PIN, OUTPUT);
-    digitalWrite(LED_PIN, LOW);
-    
-    // 1. Kayitli Ayarlari Yukle
-    loadPreferences();
+    delay(2000);
+    // 1. Ayarlari Yukle
+    config.begin();
+    config.checkSerialCommands(); // Boot sirasinda komut yakalama sansi
 
     Serial.println("\n--- Yuklu Ayarlar ---");
-    Serial.println("SSID: " + _ssid);
-    Serial.println("Station ID: " + _stationId);
+    Serial.println("SSID: " + config.getSSID());
+    Serial.println("Station ID: " + config.getStationID());
+    Serial.println("Interval: " + String(config.getInterval()) + " dk");
     Serial.println("---------------------");
 
-    // 2. Ayar Kontrolu
-    if (_ssid == "WIFI_SSID_GIRIN" || _ssid.isEmpty()) {
+    // 2. I2C Baslat
+    Wire.begin(I2C_SDA, I2C_SCL); 
+
+    // 3. Ekrani Baslat
+    display.begin(&Wire);
+    display.printStartup(config.getSSID());
+
+    // 4. Ayar Kontrolu
+    if (config.getSSID() == "WIFI_SSID_GIRIN" || config.getSSID().isEmpty()) {
+        display.showMessage("Ayar Eksik!");
         Serial.println("\n!!! AYARLAR EKSIK !!!");
         Serial.println("Lutfen Serial/Docs uzerinden ayarlari girin.");
         while (true) {
-            checkSerialCommands();
+            config.checkSerialCommands();
             delay(10);
         }
     }
 
-    // 3. Wi-Fi Baglantisi
-    Serial.print("Wi-Fi Baglaniyor...");
-    WiFi.begin(_ssid.c_str(), _pass.c_str());
+    // 5. Network Baslat
+    network.begin(config.getSSID(), config.getPass(), LED_PIN);
 
-    int attempt = 0;
-    while (WiFi.status() != WL_CONNECTED && attempt < 20) {
-        digitalWrite(LED_PIN, HIGH);
-        delay(250);
-        digitalWrite(LED_PIN, LOW);
-        delay(250);
-        Serial.print(".");
-        attempt++;
-    }
+    // 6. Sensor Baslat
+    sensorManager.begin(&Wire);
 
-    if (WiFi.status() == WL_CONNECTED) {
-        digitalWrite(LED_PIN, HIGH); // Baglaninca sabit yansin
-        Serial.println("\nWi-Fi Baglandi!");
-    } else {
-        digitalWrite(LED_PIN, LOW); // Baglanamazsa sönsün
-        Serial.println("\nWi-Fi Basarisiz. Loop'ta tekrar denenecek.");
-    }
-
-    // 4. NTP & Sensor & Library
-    timeClient.begin();
-    detectSensor();
-    dls = new DLSWeather(_stationId, _apiKey, _lat, _lon);
+    // 7. DLS Weather Kutuphanesi
+    dls = new DLSWeather(
+        config.getStationID(), 
+        config.getAPIKey(), 
+        config.getLat(), 
+        config.getLon()
+    );
     dls->begin();
 }
 
 void loop() {
-    // Wi-Fi Yonetimi
-    if (WiFi.status() != WL_CONNECTED) {
-        digitalWrite(LED_PIN, LOW); // Baglanti koparsa LED sönsün
-        static unsigned long lastReconnect = 0;
-        if (millis() - lastReconnect > 10000) {
-            WiFi.disconnect();
-            WiFi.reconnect();
-            lastReconnect = millis();
-        }
-        checkSerialCommands();
+    network.update();
+    config.checkSerialCommands();
+    
+    if (!network.isConnected()) {
+        display.showMessage("Wi-Fi Kayip...");
         return;
-    } else {
-        digitalWrite(LED_PIN, HIGH); // Bagli oldugu surece yansin
     }
 
-    // Serial Komutlarini Dinle
-    checkSerialCommands();
+    int currentMinute = network.getMinutes();
+    int interval = config.getInterval(); 
+    if (interval <= 0) interval = 30; // Guvenlik
 
-    timeClient.update();
-    int currentMinute = timeClient.getMinutes();
+    // Veri Gonderimi
+    // Mantik: Dakika, intervalin kati oldugunda VE bu dilimde henuz gondermediysek.
+    // Ornek: interval=15 -> 0, 15, 30, 45...
+    bool isTimeToSend = (currentMinute % interval == 0);
 
-    // Veri Gonderimi (İlk açılış veya 0. ve 30. Dakikalar)
-    if (firstRun || ((currentMinute == 0 || currentMinute == 30) && currentMinute != lastSentMinute)) {
+    if (firstRun || (isTimeToSend && currentMinute != lastSentMinute)) {
         if (firstRun) {
             Serial.println("\n--- İlk Acilis Verisi Hazirlaniyor ---");
+            display.showMessage("Veri Okunuyor...");
         } else {
             Serial.println("\n--- Zamanı Geldi, Veriler Okunuyor ---");
         }
         
-        switch (foundSensor) {
-            // ... (keep same switch) ...
-            case BMP280:
-                dls->temperature(bmp.readTemperature());
-                dls->pressure(bmp.readPressure() / 100.0F);
-                break;
-            case BME280:
-                dls->temperature(bme.readTemperature());
-                dls->humidity(bme.readHumidity());
-                dls->pressure(bme.readPressure() / 100.0F);
-                break;
-            case BME680:
-                if (bme680.performReading()) {
-                    dls->temperature(bme680.temperature);
-                    dls->humidity(bme680.humidity);
-                    dls->pressure(bme680.pressure / 100.0F);
-                    dls->airQuality(bme680.gas_resistance / 1000.0);
-                }
-                break;
-            default: break;
+        // --- 1. SENSOR OKUMA ---
+        AirData airValues;
+        sensorManager.getAirData(airValues);
+
+        LightData lightValues;
+        sensorManager.getLightData(lightValues);
+
+        // --- Serial Monitor Log ---
+        Serial.println("\n[Sensor Data]");
+        if (airValues.valid) {
+            Serial.print("Temp: "); Serial.print(airValues.temperature); Serial.println(" C");
+            Serial.print("Hum:  "); Serial.print(airValues.humidity); Serial.println(" %");
+            Serial.print("Pres: "); Serial.print(airValues.pressure); Serial.println(" hPa");
+            if (airValues.gasResistance > 0) {
+                Serial.print("Gas:  "); Serial.print(airValues.gasResistance); Serial.println(" KOhms");
+            }
+        } else {
+            Serial.println("Hava sensoru verisi gecersiz veya yok.");
         }
 
-        if (dls->send(timeClient.getEpochTime())) {
+        if (lightValues.valid) {
+            Serial.print("UV Idx: "); Serial.println(lightValues.uvIndex);
+            Serial.print("UVA:    "); Serial.println(lightValues.uva);
+            Serial.print("UVB:    "); Serial.println(lightValues.uvb);
+        }
+        Serial.println("----------------");
+
+        // --- 2. DLS Kutuphanesine Yazma ---
+        if (airValues.valid) {
+            dls->temperature(airValues.temperature);
+            dls->humidity(airValues.humidity);
+            dls->pressure(airValues.pressure);
+            if (airValues.gasResistance > 0) dls->airQuality(airValues.gasResistance);
+        }
+
+        // --- 3. Gonderim ---
+        String statusMsg = "Wait";
+        if (dls->send(network.getEpochTime())) {
             Serial.println("Basariyla gonderildi.");
+            statusMsg = "Sent OK";
             lastSentMinute = currentMinute;
-            firstRun = false; // İlk gönderim başarılı (veya denendi), bayrağı indir
+            firstRun = false; 
         } else {
             Serial.println("Gonderme hatasi!");
-            // Hata olsa da firstRun'ı false yapabiliriz ki spam yapmasın, 
-            // ya da ilk başarılı olana kadar true tutabiliriz. 
-            // Genelde bir kez denemesi yeterlidir.
-            firstRun = false; 
+            statusMsg = "Err";
+            
+            // Basarisiz olursa lastSentMinute guncelleme, belki 1dk sonra tekrar dener?
+            // Veya bu cycle gecti artik diyebiliriz.
+            // Simdilik firstRun ise kapat, degilse cycle'i kapat.
+             lastSentMinute = currentMinute; 
+             firstRun = false; 
         }
+        
+        // --- 4. Ekrana Yazma ---
+        float uvVal = lightValues.valid ? lightValues.uvIndex : -1.0;
+        display.printData(
+            airValues.valid ? airValues.temperature : 0.0, 
+            airValues.valid ? airValues.humidity : 0.0, 
+            airValues.valid ? airValues.pressure : 0.0, 
+            uvVal,
+            statusMsg
+        );
     }
 
     delay(1000);
