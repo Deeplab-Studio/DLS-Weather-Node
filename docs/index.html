@@ -481,9 +481,9 @@
           status.innerText = t.statusReq;
           if (!serialPort || !serialPort.readable) {
             if (!(await connectSerial())) return;
-            // DTR reset might happen, wait for boot (ESP32 setup has 2s delay)
+            // DTR reset might happen, wait for boot (ESP32 setup has 3s delay)
             status.innerText = "Waiting for device boot...";
-            await new Promise((resolve) => setTimeout(resolve, 2500));
+            await new Promise((resolve) => setTimeout(resolve, 4500));
           }
 
           status.innerText = t.statusRead;
@@ -507,7 +507,7 @@
           const timeout = setTimeout(() => {
             reader.cancel();
             status.innerText = t.statusErr + " Timeout";
-          }, 5000);
+          }, 10000);
 
           while (true) {
             const { value, done } = await reader.read();
