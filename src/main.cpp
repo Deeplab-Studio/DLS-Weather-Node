@@ -204,11 +204,9 @@ void loop() {
                 server.handleClient();
             }
         } else if (isFromSleep) {
-            // Uykudan uyanmissak, tam vaktini bekleyelim (429 hatasini onlemek icin)
-            if (currentMinute % interval == 0) {
-                shouldAttempt = true;
-                Serial.println("\n[DeepSleep] Wake-up slot reached. Sending data.");
-            }
+            // Uykudan uyanmissak hemen gonder (zaten uyku suresi doldu)
+            shouldAttempt = true;
+            Serial.println("\n[DeepSleep] Wake-up detected. Sending data immediately.");
         } else {
             // Normal modda hemen basla
             shouldAttempt = true;
@@ -302,18 +300,12 @@ void loop() {
                     int interval = config.getInterval();
                     if (interval <= 0) interval = 30; // Safety
 
-                    // Calculate minutes until next slot
-                    int minutesToNext = interval - (currentMinute % interval);
-                    if (currentMinute % interval == 0) minutesToNext = interval; 
+                    // Full interval sleep as requested (prevent drift alignment errors)
+                    long sleepSeconds = (long)interval * 60;
 
-                    // Full interval sleep as requested
-                    int sleepMinutes = minutesToNext;
-
-                    Serial.print("\n[DeepSleep] Target minute: ");
-                    Serial.print((currentMinute + minutesToNext) % 60);
-                    Serial.print(". Entering sleep for ");
-                    Serial.print(sleepMinutes);
-                    Serial.println(" mins... ");
+                    Serial.print("\n[DeepSleep] Entering sleep for ");
+                    Serial.print(sleepSeconds);
+                    Serial.println(" seconds... ");
                     
                     display.setStatus("Sleeping...");
                     display.update();
@@ -325,7 +317,7 @@ void loop() {
                     digitalWrite(SENSOR_PWR_PIN, LOW);
 
                     // ESP32 deep sleep takes microseconds
-                    esp_sleep_enable_timer_wakeup((uint64_t)sleepMinutes * 60 * 1000000);
+                    esp_sleep_enable_timer_wakeup((uint64_t)sleepSeconds * 1000000);
                     esp_deep_sleep_start();
                 }
             } else {

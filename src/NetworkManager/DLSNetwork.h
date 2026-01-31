@@ -19,6 +19,7 @@ public:
     // Time
     unsigned long getEpochTime();
     int getMinutes();
+    int getSeconds();
 
 private:
     WiFiUDP _ntpUDP;

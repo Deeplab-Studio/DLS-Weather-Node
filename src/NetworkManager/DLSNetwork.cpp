@@ -72,6 +72,10 @@ int DLSNetwork::getMinutes() {
     return _timeClient->getMinutes();
 }
 
+int DLSNetwork::getSeconds() {
+    return _timeClient->getSeconds();
+}
+
 void DLSNetwork::startMDNS(const char* hostname) {
     if (MDNS.begin(hostname)) {
         Serial.printf("mDNS baslatildi: %s.local\n", hostname);
