@@ -240,7 +240,7 @@
 
         <esp-web-install-button
           id="installBtn"
-          manifest="firmware/esp32_wroom/manifest_update.json"
+          manifest="firmware/esp32_wroom/manifest.json"
         ></esp-web-install-button>
       </div>
 
@@ -366,9 +366,6 @@
           lblLat: "Latitude",
           lblLon: "Longitude",
           lblDevice: "Device Type",
-          lblLat: "Latitude",
-          lblLon: "Longitude",
-          lblDevice: "Device Type",
           statusReq: "Requesting port...",
           statusConn: "Connected! communicating...",
           statusRead: "Reading configuration...",
@@ -394,9 +391,6 @@
           step2Desc: "Yükleme tamamlandıktan sonra ayarlarınızı girin.",
           btnRead: "Ayarları Oku",
           btnSend: "Ayarları Kaydet",
-          lblLat: "Enlem (Lat)",
-          lblLon: "Boylam (Lon)",
-          lblDevice: "Cihaz Tipi",
           lblLat: "Enlem (Lat)",
           lblLon: "Boylam (Lon)",
           lblDevice: "Cihaz Tipi",
@@ -450,10 +444,7 @@
       function updateManifest() {
         const dev = document.getElementById("deviceType").value;
         const btn = document.getElementById("installBtn");
-        btn.setAttribute(
-          "manifest",
-          "firmware/" + dev + "/manifest_update.json",
-        );
+        btn.setAttribute("manifest", "firmware/" + dev + "/manifest.json");
       }
 
       updateTexts();
