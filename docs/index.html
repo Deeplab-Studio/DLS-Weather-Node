@@ -450,7 +450,8 @@
       updateTexts();
 
       // --- SERIAL LOGIC ---
-      let port;
+      // --- SERIAL LOGIC ---
+      let serialPort;
       let reader;
       let inputDone;
       let outputDone;
@@ -459,8 +460,8 @@
 
       async function connectSerial() {
         try {
-          port = await navigator.serial.requestPort();
-          await port.open({ baudRate: 115200 });
+          serialPort = await navigator.serial.requestPort();
+          await serialPort.open({ baudRate: 115200 });
           return true;
         } catch (e) {
           console.error(e);
@@ -479,7 +480,7 @@
 
         try {
           status.innerText = t.statusReq;
-          if (!port || !port.readable) {
+          if (!serialPort || !serialPort.readable) {
             if (!(await connectSerial())) return;
           }
 
@@ -487,15 +488,16 @@
           status.style.color = "var(--primary)";
 
           // Send GET_CONFIG
+          // Send GET_CONFIG
           const encoder = new TextEncoder();
-          const writer = port.writable.getWriter();
+          const writer = serialPort.writable.getWriter();
           await writer.write(encoder.encode("GET_CONFIG\n"));
           writer.releaseLock();
 
           // Read Response
           // We need a simple line reader
           const decoder = new TextDecoder();
-          reader = port.readable.getReader();
+          reader = serialPort.readable.getReader();
           let buffer = "";
 
           // Read loop until we get valid JSON or timeout
@@ -550,7 +552,7 @@
           }
           reader.releaseLock();
           // Keep port open or close? Typically close to release resource for monitor
-          await port.close();
+          await serialPort.close();
         } catch (e) {
           console.error(e);
           status.innerText = t.statusErr + e.message;
@@ -583,7 +585,7 @@
 
         try {
           status.innerText = t.statusReq;
-          if (!port || !port.writable) {
+          if (!serialPort || !serialPort.writable) {
             if (!(await connectSerial())) return;
           }
 
@@ -603,7 +605,7 @@
           const cmd = "SET_CONFIG " + JSON.stringify(config) + "\n";
 
           const encoder = new TextEncoder();
-          const writer = port.writable.getWriter();
+          const writer = serialPort.writable.getWriter();
           await writer.write(encoder.encode(cmd));
           writer.releaseLock();
 
@@ -611,7 +613,7 @@
           status.innerText = "Waiting for device confirmation...";
 
           const decoder = new TextDecoder();
-          reader = port.readable.getReader();
+          reader = serialPort.readable.getReader();
           let buffer = "";
           let success = false;
 
@@ -642,7 +644,7 @@
             status.innerText = t.statusSaved;
             status.style.color = "var(--success)";
             setTimeout(async () => {
-              await port.close();
+              await serialPort.close();
             }, 2000);
           } else {
             status.innerText = t.statusErr + "No confirmation from device!";
