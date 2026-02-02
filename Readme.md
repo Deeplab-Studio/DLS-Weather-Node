@@ -34,7 +34,7 @@ The DLS Weather Node is designed to work with various ESP32 boards, sensors, and
 | **BME280** | I2C | ✅ | Temperature, Humidity, Pressure |
 | **BME680** | I2C | ✅ | Temperature, Humidity, Pressure, Gas (IAQ) |
 | **SHTC3** | I2C | ❌ | Temperature, Humidity |
-| **SHT30** | I2C | ❌ | Temperature, Humidity |
+| **SHT31** | I2C | ✅ | Temperature, Humidity |
 | **SHT31** | I2C | ✅ | Temperature, Humidity |
 | **SHT35** | I2C | ❌ | Temperature, Humidity |
 | **VEML6075** | I2C | ❌ | UV Index (Supported in code, not verified) |
@@ -51,14 +51,12 @@ The DLS Weather Node is designed to work with various ESP32 boards, sensors, and
 
 ## 🔑 Getting an API Key
 
-### 1️⃣ Step – Register
+### [1️⃣ Step – Register](https://wx.deeplabstudio.com/register)
 
-👉 [https://wx.deeplabstudio.com/register](https://wx.deeplabstudio.com/register)\
 ![Configuration](docs/images/img1.png)
 
-### 2️⃣ Step – Go to the API Keys Page
+### [2️⃣ Step – Go to the API Keys Page](https://wx.deeplabstudio.com/dashboard/api-keys)
 
-👉 [https://wx.deeplabstudio.com/dashboard/api-keys](https://wx.deeplabstudio.com/dashboard/api-keys)\
 ![Configuration](docs/images/img2.png)
 
 ### 3️⃣ Step – Generate a New Key
@@ -73,11 +71,10 @@ Copy and securely store your generated API key.\
 
 ---
 
-## ⚙️ Installing DLS Weather Node on ESP32
+## [⚙️ Installing DLS Weather Node on ESP32](https://deeplab-studio.github.io/DLS-Weather-Node/)
 
-### 1️⃣ Step – Open DLS Weather Installer
+### [1️⃣ Step – Open DLS Weather Installer](https://deeplab-studio.github.io/DLS-Weather-Node/)
 
-👉 [https://deeplab-studio.github.io/DLS-Weather-Node/](https://deeplab-studio.github.io/DLS-Weather-Node/)\
 ![Configuration](docs/images/img5.png)
 
 ### 2️⃣ Step – Connect and Install
@@ -95,9 +92,9 @@ After installation, configure:
 - Sensor settings\
   ![Configuration](docs/images/img7.png)
 
-### 4️⃣ Step – Verify on Website
+### [4️⃣ Step – Verify on Website](https://wx.deeplabstudio.com/)
 
-You can monitor your node from the web dashboard: 👉 [https://wx.deeplabstudio.com/](https://wx.deeplabstudio.com/)
+You can monitor your node from the web dashboard.
 
 ---
 
