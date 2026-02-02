@@ -20,22 +20,29 @@ def copy_firmware(source, target, env):
     if not os.path.exists(firmware_dir):
         os.makedirs(firmware_dir)
 
-    # Determine Offsets based on Board Type
-    # ESP32: Bootloader @ 0x1000
-    # C3/S3/C6: Bootloader @ 0x0
-    is_esp32 = "esp32" in board and not any(x in board for x in ["c3", "s3", "c6", "h2"])
+    # Determine Chip Family for Manifest (Standard names required by ESP Web Tools)
+    # Valid values: ESP32, ESP32-C3, ESP32-S3, ESP32-S2, ESP32-C6
+    chip_family = "ESP32" # Default
+    if "c3" in board or "c3" in env_name:
+        chip_family = "ESP32-C3"
+    elif "s3" in board or "s3" in env_name:
+        chip_family = "ESP32-S3"
+    elif "c6" in board or "c6" in env_name:
+        chip_family = "ESP32-C6"
     
-    bootloader_offset = 0x1000 if is_esp32 else 0x0
+    # Offsets
+    bootloader_offset = 0x1000 if chip_family == "ESP32" else 0x0
     partitions_offset = 0x8000
     app_offset = 0x10000
     boot_app0_offset = 0xe000 # Only for ESP32 usually
+    is_esp32 = (chip_family == "ESP32")
 
     manifest = {
         "name": f"DLS Weather Node - {env_name}",
         "version": "1.0.2",
         "builds": [
             {
-                "chipFamily": "ESP32" if is_esp32 else board.upper().replace("DEVKIT", "").replace("-", ""), # Approximate
+                "chipFamily": chip_family,
                 "parts": []
             }
         ]
