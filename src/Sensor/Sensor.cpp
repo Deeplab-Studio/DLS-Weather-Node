@@ -28,7 +28,11 @@ void Sensor::begin(TwoWire *wire) {
     }
     else if (_sht31.begin(0x44)) {
         _foundAirSensor = AIR_SHT3X;
-        Serial.println("[Sensor] SHT3x Tespit Edildi!");
+        Serial.println("[Sensor] SHT3x (0x44 - SHT30/31/35) Tespit Edildi!");
+    }
+    else if (_sht31.begin(0x45)) {
+        _foundAirSensor = AIR_SHT3X;
+        Serial.println("[Sensor] SHT3x (0x45 - SHT30/31/35) Tespit Edildi!");
     }
     else if (_shtc3.begin()) {
         _foundAirSensor = AIR_SHTC3;
