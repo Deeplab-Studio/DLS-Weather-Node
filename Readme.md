@@ -47,7 +47,11 @@ The DLS Weather Node is designed to work with various ESP32 boards, sensors, and
 | **SSD1306** | 1.3" OLED | ✅ | I2C |
 | **SH1106** | 1.3" OLED | ✅ | I2C |
 
-## ![Configuration](docs/images/diagram.png)
+### ESP32 Wroom 32
+## ![Configuration](docs/images/diagram1.png)
+
+### SuperMini ESP32-C3
+## ![Configuration](docs/images/diagram2.png)
 
 ## 🔑 Getting an API Key
 
