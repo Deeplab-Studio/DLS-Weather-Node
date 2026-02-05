@@ -286,6 +286,24 @@ void loop() {
              if (latestLight.uvIndex != -1.0) dls->uvIndex(latestLight.uvIndex);
         }
 
+        // --- Battery Read & Send ---
+        #ifdef ADC_PIN
+            uint32_t raw = analogRead(ADC_PIN);
+            float voltage = (raw / 4095.0) * 3.3 * ADC_MULTIPLIER;
+            int pct = map(voltage * 100, 300, 420, 0, 100);
+            if (pct < 0) pct = 0;
+            if (pct > 100) pct = 100;
+            
+            // Send to Display (so it shows up during send)
+            display.setBatteryData(voltage, pct);
+
+            // Send to API
+            dls->battery(pct);
+            dls->voltage(voltage);
+            
+            Serial.printf("[Battery] Sending: %.2fV (%d%%)\n", voltage, pct);
+        #endif
+
         // --- 3. Gonderim (Sadece bagliysa) ---
         if (isConnected) {
             display.setStatus("Sending...");
