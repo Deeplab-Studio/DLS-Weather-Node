@@ -2,15 +2,7 @@
 
 #include <Arduino.h>
 #include <Wire.h>
-#include <Adafruit_GFX.h>
-#include <Adafruit_SSD1306.h>
-#include <Adafruit_SH110X.h>
-
-enum DisplayType {
-    DISP_NONE,
-    DISP_SSD1306,
-    DISP_SH1106
-};
+#include <AutoOLED.h>
 
 enum DisplayPage {
     PAGE_NET,
@@ -75,9 +67,7 @@ public:
     void on();  // Restore/Turn on
 
 private:
-    DisplayType _type;
-    Adafruit_SSD1306* _ssd1306;
-    Adafruit_SH1106G* _sh1106;
+    AutoOLED* _oled;
     
     // Internal State
     DisplayPage _currentPage = PAGE_NET;
@@ -105,13 +95,4 @@ private:
     void drawRainPage();
     void drawLightPage();
     void drawNetPage();
-
-    // Hardware Wrappers
-    void clear();
-    void display();
-    void setCursor(int x, int y);
-    void setTextSize(int s);
-    void print(String s);
-    void print(float f, int dec = 1);
-    void println(String s);
 };
