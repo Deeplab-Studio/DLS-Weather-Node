@@ -12,3 +12,10 @@
 
 // Sensor Power Control (MOSFET)
 #define SENSOR_PWR_PIN 6
+
+// ADC Pins
+#define ADC_PIN 1 // GPIO 1 is ADC1_CH0 on S3
+#define ADC_MULTIPLIER 1.6667 // Divider: 1M + 1.5M -> 2.5/1.5 = 1.666...
+
+// Debug configuration
+#define DEBUG_MODE true

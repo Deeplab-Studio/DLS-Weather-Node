@@ -39,6 +39,12 @@ struct DispLightData {
     bool valid = false;
 };
 
+struct DispBatteryData {
+    float voltage = 0.0;
+    int percentage = 0;
+    bool valid = false;
+};
+
 struct DispNetData {
     String ip = "";
     String ssid = "";
@@ -57,6 +63,7 @@ public:
     void setWindData(float speed, float dir); 
     void setRainData(float rate, float daily); 
     void setLightData(float uv, float lux);
+    void setBatteryData(float voltage, int percentage); // New Battery Battery method
     void setNetworkInfo(String ip, String ssid, String status, bool connected);
     void setStatus(String status, bool isError = false); // New Status Bar method
 
@@ -79,6 +86,7 @@ private:
     DispWindData _windData;
     DispRainData _rainData;
     DispLightData _lightData;
+    DispBatteryData _batteryData;
     DispNetData _netData;
 
     // Status Bar

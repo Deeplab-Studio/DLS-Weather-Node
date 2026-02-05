@@ -64,6 +64,12 @@ void Display::setRainData(float rate, float daily) {
     _rainData.valid = true;
 }
 
+void Display::setBatteryData(float voltage, int percentage) {
+    _batteryData.voltage = voltage;
+    _batteryData.percentage = percentage;
+    _batteryData.valid = true;
+}
+
 void Display::setLightData(float uv, float lux) {
     _lightData.uv = uv;
     _lightData.lux = lux;

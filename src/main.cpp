@@ -341,6 +341,12 @@ void loop() {
             display.setStatus("No WiFi", true);
             pendingRetry = true;
             firstRun = false;
+            
+            #ifdef DEBUG_MODE
+            if (DEBUG_MODE) {
+                 Serial.println("[DEBUG] WiFi failed but continuing loop via DEBUG_MODE.");
+            }
+            #endif
         }
     } else {
         // If we are NOT sending data, we should still update sensors periodically 
@@ -357,10 +363,26 @@ void loop() {
             sensorManager.getAirData(latestAir);
             sensorManager.getLightData(latestLight);
             
-            // Update Display Immediate (Optional, display.update() handles paging, but data setters need calling)
-            // But we already set data inside the upload block. 
-            // We should move set*Data calls OUTSIDE the upload block to keep display fresh.
-            
+            // --- Battery Read ---
+            #ifdef ADC_PIN
+                uint32_t raw = analogRead(ADC_PIN);
+                float voltage = (raw / 4095.0) * 3.3 * ADC_MULTIPLIER;
+                
+                // Simple Percentage (3.0V - 4.2V)
+                int pct = map(voltage * 100, 300, 420, 0, 100);
+                if (pct < 0) pct = 0;
+                if (pct > 100) pct = 100;
+
+                display.setBatteryData(voltage, pct);
+                
+                // Log Battery periodically
+                static unsigned long lastBatLog = 0;
+                if (millis() - lastBatLog > 10000) {
+                     lastBatLog = millis();
+                     Serial.printf("[Battery] %.2fV (%d%%)\n", voltage, pct);
+                }
+            #endif
+
             float gasRes = (latestAir.valid && latestAir.gasResistance > 0) ? latestAir.gasResistance : -999.0;
             display.setAirData(
                 latestAir.valid ? latestAir.temperature : -999.0,
@@ -376,6 +398,12 @@ void loop() {
             // Wind/Rain placeholdes
             display.setWindData(-1.0, -1.0);
             display.setRainData(-1.0, -1.0); 
+            
+            // Handle DEBUG MODE (Skip WiFi check for sending if Debug is ON?)
+            // Actually, usually Debug mode just means "Don't crash if no WiFi"
+            // But here we want to see sensor values on screen even if offline.
+            // Which is already happening because this block runs every 2s!
+            // So we just need to ensure we don't block invalid operations.
         }
     }
 
