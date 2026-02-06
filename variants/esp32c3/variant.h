@@ -17,4 +17,4 @@
 #define ADC_MULTIPLIER 1.6667 // Divider: 1M + 1.5M -> 2.5/1.5 = 1.666...
 
 // Debug configuration
-#define DEBUG_MODE true
+#define DEBUG_MODE false
