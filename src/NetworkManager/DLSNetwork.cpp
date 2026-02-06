@@ -18,14 +18,18 @@ void DLSNetwork::begin(String ssid, String pass, int ledPin) {
 
     Serial.print("\n[WiFi] Connecting to: "); Serial.println(_ssid);
     
-    // 1. Clean old state
-    WiFi.disconnect(true);
+    // 1. Clean old state completely
+    WiFi.disconnect(true, true); // ERASE AP CREDENTIALS from NVS and Disconnect
+    delay(100);
     WiFi.mode(WIFI_OFF);
     delay(100);
     
     // 2. Set mode and start
     WiFi.mode(WIFI_STA);
-    WiFi.setSleep(false); // Disable power saving for max compatibility
+    WiFi.setSleep(false); // Disable power saving
+    WiFi.setTxPower(WIFI_POWER_19_5dBm); // MAX POWER
+    WiFi.setAutoReconnect(true);
+    WiFi.persistent(false); // Do not use NVS, always fresh connect
 
     WiFi.begin(_ssid.c_str(), _pass.c_str());
 
@@ -37,6 +41,10 @@ void DLSNetwork::begin(String ssid, String pass, int ledPin) {
         }
         delay(500);
         Serial.print(".");
+        // Print status code every 10 dots (5 seconds)
+        if (attempt % 10 == 0) {
+            Serial.print(" (Status: "); Serial.print(WiFi.status()); Serial.print(") ");
+        }
         attempt++;
     }
 
@@ -57,22 +65,21 @@ void DLSNetwork::begin(String ssid, String pass, int ledPin) {
 }
 
 void DLSNetwork::update() {
-    // Wi-Fi Reconnect Logic
-    if (WiFi.status() != WL_CONNECTED) {
-        if (_ledPin != -1) digitalWrite(_ledPin, LOW);
-        
-        static unsigned long lastCheck = 0;
-        // Check every 10 seconds if disconnected
-        if (millis() - _lastReconnectAttempt > 10000) {
-            _lastReconnectAttempt = millis();
-            Serial.println("[WiFi] Lost connection. Reconnecting...");
-            // Don't use disconnect(true) here as it might disrupt partial connection attempts
-            // Just try begin again
-            WiFi.reconnect(); 
-        }
-    } else {
+    // Wi-Fi Reconnect Logic handled by AutoReconnect usually.
+    // We just monitor and Reboot if stuck for too long (5 minutes)
+    if (WiFi.status() == WL_CONNECTED) {
          if (_ledPin != -1) digitalWrite(_ledPin, HIGH);
          _timeClient->update();
+         _lastReconnectAttempt = millis(); // Reset watchdog timer while connected
+    } else {
+        if (_ledPin != -1) digitalWrite(_ledPin, LOW);
+        
+        // If disconnected for more than 5 minutes, restart ESP
+        if (millis() - _lastReconnectAttempt > 300000) {
+            Serial.println("[WiFi] Stuck disconnected for 5 mins. Restarting...");
+            delay(1000);
+            ESP.restart();
+        }
     }
 }
 
