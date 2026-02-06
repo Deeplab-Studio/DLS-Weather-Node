@@ -288,8 +288,10 @@ void loop() {
 
         // --- Battery Read & Send ---
         #ifdef ADC_PIN
-            uint32_t raw = analogRead(ADC_PIN);
-            float voltage = (raw / 4095.0) * 3.3 * ADC_MULTIPLIER;
+            // Use calibrated millivolts reading
+            uint32_t calib_mV = analogReadMilliVolts(ADC_PIN);
+            float voltage = (calib_mV / 1000.0) * ADC_MULTIPLIER;
+            
             int pct = map(voltage * 100, 300, 420, 0, 100);
             if (pct < 0) pct = 0;
             if (pct > 100) pct = 100;
@@ -301,7 +303,7 @@ void loop() {
             dls->battery(pct);
             dls->voltage(voltage);
             
-            Serial.printf("[Battery] Sending: %.2fV (%d%%)\n", voltage, pct);
+            Serial.printf("[Battery] Raw mV: %d | Calc: %.2fV (%d%%)\n", calib_mV, voltage, pct);
         #endif
 
         // --- 3. Gonderim (Sadece bagliysa) ---
@@ -383,8 +385,8 @@ void loop() {
             
             // --- Battery Read ---
             #ifdef ADC_PIN
-                uint32_t raw = analogRead(ADC_PIN);
-                float voltage = (raw / 4095.0) * 3.3 * ADC_MULTIPLIER;
+                uint32_t calib_mV = analogReadMilliVolts(ADC_PIN);
+                float voltage = (calib_mV / 1000.0) * ADC_MULTIPLIER;
                 
                 // Simple Percentage (3.0V - 4.2V)
                 int pct = map(voltage * 100, 300, 420, 0, 100);

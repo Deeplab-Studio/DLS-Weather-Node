@@ -31,7 +31,7 @@ void DLSNetwork::begin(String ssid, String pass, int ledPin) {
 
     // 3. Wait for connection (Aggressive check)
     int attempt = 0;
-    while (WiFi.status() != WL_CONNECTED && attempt < 30) { // Increased to 30 (15 sec)
+    while (WiFi.status() != WL_CONNECTED && attempt < 60) { // Increased to 60 (30 sec)
         if (_ledPin != -1) {
             digitalWrite(_ledPin, !digitalRead(_ledPin)); // Toggle
         }
