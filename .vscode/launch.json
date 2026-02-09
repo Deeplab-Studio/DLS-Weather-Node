@@ -12,9 +12,9 @@
             "type": "platformio-debug",
             "request": "launch",
             "name": "PIO Debug",
-            "executable": "/Users/ugur/Desktop/GIT/DLS-Weather-Node/.pio/build/esp32_wroom/firmware.elf",
+            "executable": "C:/Users/ugura/Desktop/GIT/DLS-Weather-ESP32/.pio/build/esp32_wroom/firmware.elf",
             "projectEnvName": "esp32_wroom",
-            "toolchainBinDir": "/Users/ugur/.platformio/packages/toolchain-xtensa-esp32/bin",
+            "toolchainBinDir": "C:/Users/ugura/.platformio/packages/toolchain-xtensa-esp-elf/bin",
             "internalConsoleOptions": "openOnSessionStart",
             "preLaunchTask": {
                 "type": "PlatformIO",
@@ -25,18 +25,18 @@
             "type": "platformio-debug",
             "request": "launch",
             "name": "PIO Debug (skip Pre-Debug)",
-            "executable": "/Users/ugur/Desktop/GIT/DLS-Weather-Node/.pio/build/esp32_wroom/firmware.elf",
+            "executable": "C:/Users/ugura/Desktop/GIT/DLS-Weather-ESP32/.pio/build/esp32_wroom/firmware.elf",
             "projectEnvName": "esp32_wroom",
-            "toolchainBinDir": "/Users/ugur/.platformio/packages/toolchain-xtensa-esp32/bin",
+            "toolchainBinDir": "C:/Users/ugura/.platformio/packages/toolchain-xtensa-esp-elf/bin",
             "internalConsoleOptions": "openOnSessionStart"
         },
         {
             "type": "platformio-debug",
             "request": "launch",
             "name": "PIO Debug (without uploading)",
-            "executable": "/Users/ugur/Desktop/GIT/DLS-Weather-Node/.pio/build/esp32_wroom/firmware.elf",
+            "executable": "C:/Users/ugura/Desktop/GIT/DLS-Weather-ESP32/.pio/build/esp32_wroom/firmware.elf",
             "projectEnvName": "esp32_wroom",
-            "toolchainBinDir": "/Users/ugur/.platformio/packages/toolchain-xtensa-esp32/bin",
+            "toolchainBinDir": "C:/Users/ugura/.platformio/packages/toolchain-xtensa-esp-elf/bin",
             "internalConsoleOptions": "openOnSessionStart",
             "loadMode": "manual"
         }

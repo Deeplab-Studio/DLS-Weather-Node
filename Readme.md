@@ -143,7 +143,12 @@ x-api-key: <api_key>
   "rain": {
     "rate": 0,                // Optional
     "daily": 2.5              // Optional
-  }
+  },
+  "power": {
+  	"battery": 85,            // Optional
+  	"voltage": 4.1,           // Optional
+  	"solar": 5.2              // Optional
+	}
 }
 ```
 
