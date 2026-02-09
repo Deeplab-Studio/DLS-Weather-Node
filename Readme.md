@@ -145,9 +145,9 @@ x-api-key: <api_key>
     "daily": 2.5              // Optional
   },
   "power": {
-  	"battery": 85,            // Optional
-  	"voltage": 4.1,           // Optional
-  	"solar": 5.2              // Optional
+  	"battery": 85,            // Optional Percent
+  	"voltage": 4.1,           // Optional Volts
+  	"solar": 5.2              // Optional Volts
 	}
 }
 ```
