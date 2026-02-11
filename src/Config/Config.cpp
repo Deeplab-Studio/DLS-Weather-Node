@@ -30,6 +30,32 @@ void Config::load() {
     _txPower = _prefs.getInt("txPower", _txPower);
 }
 
+
+
+void Config::saveConfig(String ssid, String pass, String apiKey, String stationId, float lat, float lon, int interval, bool deepSleep, int txPower) {
+    _ssid = ssid;
+    _pass = pass;
+    _apiKey = apiKey;
+    _stationId = stationId;
+    _lat = lat;
+    _lon = lon;
+    _intervalMin = interval;
+    _isDeepSleepEnabled = deepSleep;
+    _txPower = txPower;
+
+    _prefs.putString("ssid", _ssid);
+    _prefs.putString("pass", _pass);
+    _prefs.putString("api", _apiKey);
+    _prefs.putString("station", _stationId);
+    _prefs.putFloat("lat", _lat);
+    _prefs.putFloat("lon", _lon);
+    _prefs.putInt("interval", _intervalMin);
+    _prefs.putBool("deepsleep", _isDeepSleepEnabled);
+    _prefs.putInt("txPower", _txPower);
+    
+    Serial.println("[Config] Settings saved via Web/API.");
+}
+
 void Config::checkSerialCommands() {
     if (Serial.available()) {
         String cmd = Serial.readStringUntil('\n');

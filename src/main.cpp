@@ -91,6 +91,79 @@ void handleNotFound() {
     server.send(404, "application/json", message);
 }
 
+// --- Web UI Handlers ---
+void handleWebRoot() {
+    String html = "<!DOCTYPE html><html><head><meta charset='utf-8'><meta name='viewport' content='width=device-width, initial-scale=1'><title>DLS Weather Config</title>";
+    html += "<style>body{font-family:sans-serif;margin:20px;background:#f0f2f5;} .container{max-width:500px;margin:auto;background:white;padding:20px;border-radius:10px;box-shadow:0 2px 5px rgba(0,0,0,0.1);} h2{text-align:center;color:#333;} label{display:block;margin-top:10px;font-weight:bold;} input,select{width:100%;padding:10px;margin-top:5px;border:1px solid #ddd;border-radius:5px;box-sizing:border-box;} button{width:100%;background:#2563eb;color:white;padding:12px;border:none;border-radius:5px;margin-top:20px;cursor:pointer;font-size:16px;} button:hover{background:#1d4ed8;}</style>";
+    html += "</head><body><div class='container'><h2>Device Configuration</h2>";
+    html += "<form action='/save' method='POST'>";
+    
+    html += "<label>WiFi SSID</label><input type='text' name='ssid' value='" + config.getSSID() + "'>";
+    html += "<label>WiFi Password</label><input type='password' name='pass' value='" + config.getPass() + "'>";
+    
+    html += "<label>API Key</label><input type='text' name='api' value='" + config.getAPIKey() + "'>";
+    html += "<label>Station ID</label><input type='text' name='station' value='" + config.getStationID() + "'>";
+    
+    html += "<div style='display:flex;gap:10px;'>";
+    html += "<div style='flex:1;'><label>Lat</label><input type='text' name='lat' value='" + String(config.getLat(), 5) + "'></div>";
+    html += "<div style='flex:1;'><label>Lon</label><input type='text' name='lon' value='" + String(config.getLon(), 5) + "'></div>";
+    html += "</div>";
+    
+    html += "<label>Interval (Min)</label><select name='interval'>";
+    int iv = config.getInterval();
+    html += "<option value='15'" + String(iv==15?" selected":"") + ">15</option>";
+    html += "<option value='20'" + String(iv==20?" selected":"") + ">20</option>";
+    html += "<option value='25'" + String(iv==25?" selected":"") + ">25</option>";
+    html += "<option value='30'" + String(iv==30?" selected":"") + ">30</option>";
+    html += "</select>";
+    
+    html += "<label>WiFi Power</label><select name='txPower'>";
+    int tx = config.getTxPower();
+    html += "<option value='78'" + String(tx==78?" selected":"") + ">19.5 dBm (Max)</option>";
+    html += "<option value='26'" + String(tx==26?" selected":"") + ">8.5 dBm (Default)</option>";
+    html += "<option value='8'" + String(tx==8?" selected":"") + ">2 dBm (Low)</option>";
+    html += "</select>";
+    
+    html += "<label>Deep Sleep</label><select name='deepSleep'>";
+    bool ds = config.isDeepSleepEnabled();
+    html += "<option value='0'" + String(!ds?" selected":"") + ">OFF (Indoor/USB)</option>";
+    html += "<option value='1'" + String(ds?" selected":"") + ">ON (Battery/Roof)</option>";
+    html += "</select>";
+    
+    html += "<button type='submit'>Save & Restart</button>";
+    html += "</form></div></body></html>";
+    
+    server.send(200, "text/html", html);
+}
+
+void handleWebSave() {
+    if (server.method() != HTTP_POST) {
+        server.send(405, "text/plain", "Method Not Allowed");
+        return;
+    }
+    
+    String ssid = server.arg("ssid");
+    String pass = server.arg("pass");
+    String api = server.arg("api");
+    String station = server.arg("station");
+    float lat = server.arg("lat").toFloat();
+    float lon = server.arg("lon").toFloat();
+    int interval = server.arg("interval").toInt();
+    int txPower = server.arg("txPower").toInt();
+    bool deepSleep = (server.arg("deepSleep") == "1");
+    
+    config.saveConfig(ssid, pass, api, station, lat, lon, interval, deepSleep, txPower);
+    
+    String html = "<!DOCTYPE html><html><head><meta http-equiv='refresh' content='30;url=/'><meta name='viewport' content='width=device-width, initial-scale=1'></head>";
+    html += "<body style='font-family:sans-serif;text-align:center;padding:50px;'>";
+    html += "<h2>Settings Saved!</h2><p>Device is restarting...</p><p>Please reconnect to: <b>" + ssid + "</b></p></body></html>";
+    
+    server.send(200, "text/html", html);
+    
+    delay(1000);
+    ESP.restart();
+}
+
 void setup() {
     // 0. SENSOR POWER ON (MOSFET)
     pinMode(SENSOR_PWR_PIN, OUTPUT);
@@ -160,6 +233,8 @@ void setup() {
     dls->begin();
 
     // 8. Web Server
+    server.on("/", HTTP_GET, handleWebRoot);
+    server.on("/save", HTTP_POST, handleWebSave);
     server.on("/api/weather", HTTP_GET, handleWeatherAPI);
     server.onNotFound(handleNotFound);
     server.begin();

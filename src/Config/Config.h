@@ -9,6 +9,10 @@ public:
     void begin();
     void checkSerialCommands();
 
+    // Save all settings at once
+    void saveConfig(String ssid, String pass, String apiKey, String stationId, float lat, float lon, int interval, bool deepSleep, int txPower);
+
+    // Getters
     // Getters
     String getSSID() const { return _ssid; }
     String getPass() const { return _pass; }
