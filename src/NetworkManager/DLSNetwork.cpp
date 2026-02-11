@@ -48,7 +48,7 @@ void DLSNetwork::begin(String ssid, String pass, int ledPin) {
         digitalWrite(_ledPin, LOW);
     }
 
-    _timeClient->begin(); // Start UDP for NTP
+    // _timeClient->begin(); // MOVED DOWN: Must be after WiFi init to avoid crash
 
     Serial.print("\n[WiFi] Configuring Ent-driven Connection to: "); Serial.println(_ssid);
 
@@ -64,6 +64,8 @@ void DLSNetwork::begin(String ssid, String pass, int ledPin) {
     
     // Attempt to set power (also handled in STA_START event for robustness)
     WiFi.setTxPower(_txPower);
+
+    _timeClient->begin(); // Start UDP for NTP (Safe here after WiFi init)
 }
 
 void DLSNetwork::update() {
