@@ -4,6 +4,41 @@ DLSNetwork::DLSNetwork() {
     _timeClient = new NTPClient(_ntpUDP, "pool.ntp.org", 0, 60000);
     _lastReconnectAttempt = 0;
     _ledPin = -1;
+    _txPower = WIFI_POWER_8_5dBm;
+}
+
+void DLSNetwork::setTxPower(wifi_power_t power) {
+    _txPower = power;
+    if (isConnected()) {
+        WiFi.setTxPower(_txPower);
+    }
+}
+
+void DLSNetwork::onWiFiEvent(WiFiEvent_t event) {
+    switch (event) {
+        case ARDUINO_EVENT_WIFI_STA_START:
+            Serial.println("[WiFi] Station Started");
+            WiFi.setTxPower(_txPower); // Ensure power is set when STA starts
+            break;
+        case ARDUINO_EVENT_WIFI_STA_CONNECTED:
+            Serial.println("[WiFi] Connected to Access Point");
+            break;
+        case ARDUINO_EVENT_WIFI_STA_GOT_IP:
+            Serial.print("[WiFi] Got IP: ");
+            Serial.println(WiFi.localIP());
+            Serial.print("[WiFi] Tx Power: ");
+            Serial.println(WiFi.getTxPower());
+            if (_ledPin != -1) digitalWrite(_ledPin, HIGH);
+            _timeClient->begin();
+            _timeClient->forceUpdate();
+            break;
+        case ARDUINO_EVENT_WIFI_STA_DISCONNECTED:
+            Serial.println("[WiFi] Disconnected");
+            if (_ledPin != -1) digitalWrite(_ledPin, LOW);
+            break;
+        default:
+            break;
+    }
 }
 
 void DLSNetwork::begin(String ssid, String pass, int ledPin) {
@@ -16,63 +51,35 @@ void DLSNetwork::begin(String ssid, String pass, int ledPin) {
         digitalWrite(_ledPin, LOW);
     }
 
-    Serial.print("\n[WiFi] Connecting to: "); Serial.println(_ssid);
-    
-    // 1. Clean old state completely
-    WiFi.disconnect(true, true); // ERASE AP CREDENTIALS from NVS and Disconnect
-    delay(100);
-    WiFi.mode(WIFI_OFF);
-    delay(100);
-    
-    // 2. Set mode and start
+    Serial.print("\n[WiFi] Configuring Ent-driven Connection to: "); Serial.println(_ssid);
+
+    // Register Event Handler
+    WiFi.onEvent(std::bind(&DLSNetwork::onWiFiEvent, this, std::placeholders::_1));
+
+    // Professional Setup as requested
     WiFi.mode(WIFI_STA);
-    WiFi.setSleep(false); // Disable power saving
-    WiFi.setTxPower(WIFI_POWER_19_5dBm); // MAX POWER
-    WiFi.setAutoReconnect(true);
-    WiFi.persistent(false); // Do not use NVS, always fresh connect
-
+    WiFi.persistent(false);      // Don't save credentials to Flash
+    WiFi.setAutoReconnect(true); // Let ESP32 background task handle reconnection
+    
     WiFi.begin(_ssid.c_str(), _pass.c_str());
-
-    // 3. Wait for connection (Aggressive check)
-    int attempt = 0;
-    while (WiFi.status() != WL_CONNECTED && attempt < 60) { // Increased to 60 (30 sec)
-        if (_ledPin != -1) {
-            digitalWrite(_ledPin, !digitalRead(_ledPin)); // Toggle
-        }
-        delay(500);
-        Serial.print(".");
-        // Print status code every 10 dots (5 seconds)
-        if (attempt % 10 == 0) {
-            Serial.print(" (Status: "); Serial.print(WiFi.status()); Serial.print(") ");
-        }
-        attempt++;
-    }
-
-    if (WiFi.status() == WL_CONNECTED) {
-        if (_ledPin != -1) digitalWrite(_ledPin, HIGH); 
-        Serial.println("\n[WiFi] CONNECTED!");
-        Serial.print("[WiFi] IP: "); Serial.println(WiFi.localIP());
-        Serial.print("[WiFi] Mac: "); Serial.println(WiFi.macAddress());
-        
-        // Force time update immediately
-        _timeClient->begin();
-        _timeClient->forceUpdate();
-    } else {
-        if (_ledPin != -1) digitalWrite(_ledPin, LOW);
-        Serial.println("\n[WiFi] FAILED to connect. Will retry in loop.");
-        // Don't turn off WiFi here, let the loop handle retry
-    }
+    
+    // Attempt to set power (also handled in STA_START event for robustness)
+    WiFi.setTxPower(_txPower);
 }
 
 void DLSNetwork::update() {
-    // Wi-Fi Reconnect Logic handled by AutoReconnect usually.
-    // We just monitor and Reboot if stuck for too long (5 minutes)
+    // Stability Logic
     if (WiFi.status() == WL_CONNECTED) {
          if (_ledPin != -1) digitalWrite(_ledPin, HIGH);
          _timeClient->update();
-         _lastReconnectAttempt = millis(); // Reset watchdog timer while connected
+         _lastReconnectAttempt = millis(); 
     } else {
         if (_ledPin != -1) digitalWrite(_ledPin, LOW);
+        
+        // With AutoReconnect(true), we rarely need manual intervention.
+        // However, if the stack gets stuck or logic fails (e.g. 5 mins disconnected), we reboot.
+        // We can also try a manual reconnect pulse if truly stuck but not reboot-worthy,
+        // but user specifically preferred AutoReconnect system.
         
         // If disconnected for more than 5 minutes, restart ESP
         if (millis() - _lastReconnectAttempt > 300000) {
@@ -102,7 +109,6 @@ int DLSNetwork::getSeconds() {
 void DLSNetwork::startMDNS(const char* hostname) {
     if (MDNS.begin(hostname)) {
         Serial.printf("[mDNS] Started: %s.local\n", hostname);
-        // Add service to MDNS-SD
         MDNS.addService("http", "tcp", 80);
         MDNS.addService("dls_weather", "udp", 12345); 
     } else {

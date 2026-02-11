@@ -10,6 +10,7 @@ Config::Config() {
     _lon = 0.0;
     _intervalMin = 30; // Default 30 mins
     _isDeepSleepEnabled = false;
+    _txPower = 26; // Default WIFI_POWER_8_5dBm (Value 26)
 }
 
 void Config::begin() {
@@ -26,6 +27,7 @@ void Config::load() {
     _lon = _prefs.getFloat("lon", _lon);
     _intervalMin = _prefs.getInt("interval", _intervalMin);
     _isDeepSleepEnabled = _prefs.getBool("deepsleep", _isDeepSleepEnabled);
+    _txPower = _prefs.getInt("txPower", _txPower);
 }
 
 void Config::checkSerialCommands() {
@@ -44,6 +46,7 @@ void Config::checkSerialCommands() {
             doc["lon"] = _lon;
             doc["interval"] = _intervalMin;
             doc["deepSleep"] = _isDeepSleepEnabled;
+            doc["txPower"] = _txPower;
             
             String response;
             serializeJson(doc, response);
@@ -63,6 +66,7 @@ void Config::checkSerialCommands() {
                 if (doc.containsKey("lon")) _lon = doc["lon"].as<float>();
                 if (doc.containsKey("interval")) _intervalMin = doc["interval"].as<int>();
                 if (doc.containsKey("deepSleep")) _isDeepSleepEnabled = doc["deepSleep"].as<bool>();
+                if (doc.containsKey("txPower")) _txPower = doc["txPower"].as<int>();
                 
                 // Save all
                 _prefs.putString("ssid", _ssid);
@@ -73,6 +77,7 @@ void Config::checkSerialCommands() {
                 _prefs.putFloat("lon", _lon);
                 _prefs.putInt("interval", _intervalMin);
                 _prefs.putBool("deepsleep", _isDeepSleepEnabled);
+                _prefs.putInt("txPower", _txPower);
                 
                 Serial.println("CONFIG_SAVED");
                 delay(500);

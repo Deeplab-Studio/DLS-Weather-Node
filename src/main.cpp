@@ -139,6 +139,9 @@ void setup() {
     }
     WiFi.setHostname(hostname.c_str());
 
+    // Apply configured TX Config
+    // config.getTxPower() returns int, we need to cast to wifi_power_t
+    network.setTxPower((wifi_power_t)config.getTxPower());
     network.begin(config.getSSID(), config.getPass(), LED_PIN);
     
     // 5b. mDNS Baslat

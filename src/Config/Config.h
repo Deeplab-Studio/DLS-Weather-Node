@@ -18,6 +18,7 @@ public:
     float getLon() const { return _lon; }
     int getInterval() const { return _intervalMin; }
     bool isDeepSleepEnabled() const { return _isDeepSleepEnabled; }
+    int getTxPower() const { return _txPower; }
 
 private:
     Preferences _prefs;
@@ -31,6 +32,7 @@ private:
     float _lon;
     int _intervalMin;
     bool _isDeepSleepEnabled;
+    int _txPower; // Stores wifi_power_t enum value as int
 
     void load();
     void info();

@@ -13,6 +13,9 @@ public:
     void update();
     void startMDNS(const char* hostname);
     
+    void setTxPower(wifi_power_t power);
+    void onWiFiEvent(WiFiEvent_t event);
+    
     // Status
     bool isConnected();
     
@@ -28,6 +31,7 @@ private:
     String _ssid;
     String _pass;
     int _ledPin;
+    wifi_power_t _txPower = WIFI_POWER_8_5dBm;
 
     unsigned long _lastReconnectAttempt;
 };
