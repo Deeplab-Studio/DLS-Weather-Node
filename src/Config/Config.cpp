@@ -6,6 +6,7 @@ Config::Config() {
     _pass = "WIFI_SIFRE_GIRIN";
     _apiKey = "API_KEY";
     _stationId = "STATION_ID";
+    _alias = ""; // Default empty
     _lat = 0.0;
     _lon = 0.0;
     _intervalMin = 30; // Default 30 mins
@@ -23,6 +24,7 @@ void Config::load() {
     _pass = _prefs.getString("pass", _pass);
     _apiKey = _prefs.getString("api", _apiKey);
     _stationId = _prefs.getString("station", _stationId);
+    _alias = _prefs.getString("alias", _alias);
     _lat = _prefs.getFloat("lat", _lat);
     _lon = _prefs.getFloat("lon", _lon);
     _intervalMin = _prefs.getInt("interval", _intervalMin);
@@ -31,12 +33,12 @@ void Config::load() {
 }
 
 
-
-void Config::saveConfig(String ssid, String pass, String apiKey, String stationId, float lat, float lon, int interval, bool deepSleep, int txPower) {
+void Config::saveConfig(String ssid, String pass, String apiKey, String stationId, String alias, float lat, float lon, int interval, bool deepSleep, int txPower) {
     _ssid = ssid;
     _pass = pass;
     _apiKey = apiKey;
     _stationId = stationId;
+    _alias = alias;
     _lat = lat;
     _lon = lon;
     _intervalMin = interval;
@@ -47,6 +49,7 @@ void Config::saveConfig(String ssid, String pass, String apiKey, String stationI
     _prefs.putString("pass", _pass);
     _prefs.putString("api", _apiKey);
     _prefs.putString("station", _stationId);
+    _prefs.putString("alias", _alias);
     _prefs.putFloat("lat", _lat);
     _prefs.putFloat("lon", _lon);
     _prefs.putInt("interval", _intervalMin);
@@ -68,6 +71,7 @@ void Config::checkSerialCommands() {
             doc["pass"] = _pass;
             doc["api"] = _apiKey;
             doc["station"] = _stationId;
+            doc["alias"] = _alias;
             doc["lat"] = _lat;
             doc["lon"] = _lon;
             doc["interval"] = _intervalMin;
@@ -88,6 +92,7 @@ void Config::checkSerialCommands() {
                 if (doc.containsKey("pass")) _pass = doc["pass"].as<String>();
                 if (doc.containsKey("api")) _apiKey = doc["api"].as<String>();
                 if (doc.containsKey("station")) _stationId = doc["station"].as<String>();
+                if (doc.containsKey("alias")) _alias = doc["alias"].as<String>();
                 if (doc.containsKey("lat")) _lat = doc["lat"].as<float>();
                 if (doc.containsKey("lon")) _lon = doc["lon"].as<float>();
                 if (doc.containsKey("interval")) _intervalMin = doc["interval"].as<int>();
@@ -99,6 +104,7 @@ void Config::checkSerialCommands() {
                 _prefs.putString("pass", _pass);
                 _prefs.putString("api", _apiKey);
                 _prefs.putString("station", _stationId);
+                _prefs.putString("alias", _alias);
                 _prefs.putFloat("lat", _lat);
                 _prefs.putFloat("lon", _lon);
                 _prefs.putInt("interval", _intervalMin);
@@ -138,6 +144,7 @@ void Config::info() {
     Serial.println("--- Mevcut Ayarlar ---");
     Serial.println("SSID: " + _ssid);
     Serial.println("Station: " + _stationId);
+    Serial.println("Alias: " + _alias);
     Serial.println("Lat: " + String(_lat, 6));
     Serial.println("Lon: " + String(_lon, 6));
     Serial.println("Interval: " + String(_intervalMin) + " dk");

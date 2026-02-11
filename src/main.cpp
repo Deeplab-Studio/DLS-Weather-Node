@@ -103,6 +103,7 @@ void handleWebRoot() {
     
     html += "<label>API Key</label><input type='text' name='api' value='" + config.getAPIKey() + "'>";
     html += "<label>Station ID</label><input type='text' name='station' value='" + config.getStationID() + "'>";
+    html += "<label>Alias (Optional)</label><input type='text' name='alias' value='" + config.getAlias() + "'>";
     
     html += "<div style='display:flex;gap:10px;'>";
     html += "<div style='flex:1;'><label>Lat</label><input type='text' name='lat' value='" + String(config.getLat(), 5) + "'></div>";
@@ -146,21 +147,21 @@ void handleWebSave() {
     String pass = server.arg("pass");
     String api = server.arg("api");
     String station = server.arg("station");
+    String alias = server.arg("alias");
     float lat = server.arg("lat").toFloat();
     float lon = server.arg("lon").toFloat();
     int interval = server.arg("interval").toInt();
     int txPower = server.arg("txPower").toInt();
     bool deepSleep = (server.arg("deepSleep") == "1");
     
-    config.saveConfig(ssid, pass, api, station, lat, lon, interval, deepSleep, txPower);
+    config.saveConfig(ssid, pass, api, station, alias, lat, lon, interval, deepSleep, txPower);
     
     String html = "<!DOCTYPE html><html><head><meta http-equiv='refresh' content='30;url=/'><meta name='viewport' content='width=device-width, initial-scale=1'></head>";
     html += "<body style='font-family:sans-serif;text-align:center;padding:50px;'>";
     html += "<h2>Settings Saved!</h2><p>Device is restarting...</p><p>Please reconnect to: <b>" + ssid + "</b></p></body></html>";
     
-    server.send(200, "text/html", html);
-    
-    delay(1000);
+    server.send(200, "text/html", html); // Send response before restart
+    delay(1000); // Give time to flush
     ESP.restart();
 }
 
@@ -183,6 +184,7 @@ void setup() {
     Serial.println("\n--- Yuklu Ayarlar ---");
     Serial.println("SSID: " + config.getSSID());
     Serial.println("Station ID: " + config.getStationID());
+    if (!config.getAlias().isEmpty()) Serial.println("Alias: " + config.getAlias());
     Serial.println("Interval: " + String(config.getInterval()) + " dk");
     Serial.println("---------------------");
 
@@ -191,7 +193,9 @@ void setup() {
 
     // 3. Ekrani Baslat
     display.begin(&Wire);
-    display.printStartup(config.getSSID());
+    
+    // Show Startup Screen with SSID and Alias
+    display.printStartup(config.getSSID(), config.getAlias());
 
     // 4. Ayar Kontrolu
     if (config.getSSID() == "WIFI_SSID_GIRIN" || config.getSSID().isEmpty()) {

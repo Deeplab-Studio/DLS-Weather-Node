@@ -10,7 +10,7 @@ public:
     void checkSerialCommands();
 
     // Save all settings at once
-    void saveConfig(String ssid, String pass, String apiKey, String stationId, float lat, float lon, int interval, bool deepSleep, int txPower);
+    void saveConfig(String ssid, String pass, String apiKey, String stationId, String alias, float lat, float lon, int interval, bool deepSleep, int txPower);
 
     // Getters
     // Getters
@@ -18,6 +18,7 @@ public:
     String getPass() const { return _pass; }
     String getAPIKey() const { return _apiKey; }
     String getStationID() const { return _stationId; }
+    String getAlias() const { return _alias; } // NEW
     float getLat() const { return _lat; }
     float getLon() const { return _lon; }
     int getInterval() const { return _intervalMin; }
@@ -32,6 +33,7 @@ private:
     String _pass;
     String _apiKey;
     String _stationId;
+    String _alias; // NEW
     float _lat;
     float _lon;
     int _intervalMin;

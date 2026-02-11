@@ -265,6 +265,10 @@
         <label>Station ID</label>
         <input type="text" id="station" placeholder="ST-..." />
       </div>
+      <div class="input-group">
+        <label id="lblAlias">Device Alias (Optional)</label>
+        <input type="text" id="alias" placeholder="e.g. Balcony" />
+      </div>
       <div style="display: flex; gap: 10px">
         <div class="input-group" style="flex: 1">
           <label id="lblLat">Latitude</label>
@@ -365,6 +369,7 @@
         optSleepOn: "On (Battery / Rooftop)",
         optSleepOff: "Off (Personal Use / Indoor)",
         lblTxPower: "WiFi Output Power (TX)",
+        lblAlias: "Device Alias (Optional)",
       },
       tr: {
         title: "DLSWeather Yükleyici",
@@ -395,6 +400,7 @@
         optSleepOn: "Açık (Batarya / Çatı Tipi)",
         optSleepOff: "Kapalı (Sürekli Güç / İç Mekan)",
         lblTxPower: "WiFi Çıkış Gücü (TX)",
+        lblAlias: "Cihaz Adı (Opsiyonel)",
       },
     };
 
@@ -421,6 +427,7 @@
 
       document.getElementById("lblDeepSleep").innerText = t.lblDeepSleep;
       document.getElementById("lblTxPower").innerText = t.lblTxPower;
+      document.getElementById("lblAlias").innerText = t.lblAlias;
 
       const selSleep = document.getElementById("deepSleep");
       selSleep.options[0].text = t.optSleepOff;
@@ -522,6 +529,8 @@
                 if (data.api) document.getElementById("api").value = data.api;
                 if (data.station)
                   document.getElementById("station").value = data.station;
+                if (data.alias)
+                  document.getElementById("alias").value = data.alias;
                 if (data.lat) document.getElementById("lat").value = data.lat;
                 if (data.lon) document.getElementById("lon").value = data.lon;
                 if (data.interval)
@@ -557,6 +566,7 @@
       const pass = document.getElementById("pass").value;
       const key = document.getElementById("api").value;
       const station = document.getElementById("station").value;
+      const alias = document.getElementById("alias").value;
       const lat = document.getElementById("lat").value;
       const lon = document.getElementById("lon").value;
       const interval = document.getElementById("interval").value;
@@ -589,6 +599,7 @@
           pass: pass,
           api: key,
           station: station,
+          alias: alias,
           lat: parseFloat(lat || 0),
           lon: parseFloat(lon || 0),
           interval: parseInt(interval || 30),

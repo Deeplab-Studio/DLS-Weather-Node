@@ -237,25 +237,26 @@ void Display::drawFooter() {
 
 // --- Helpers & Existing Wrappers ---
 
-void Display::printStartup(String ssid) {
+void Display::printStartup(String ssid, String alias) {
     if (_oled->getType() == OLED_NONE) return;
     _oled->clearDisplay();
     
-    // Centered "DLS Weather Station" (Roughly)
-    // 128 px wide. Char width ~6px (size 1). 
-    // "DLS Weather" = 11 chars * 6 = 66 px. (128-66)/2 = 31
-    // "Station" = 7 chars * 6 = 42 px. (128-42)/2 = 43
-    
     _oled->setTextSize(1); 
     
-    _oled->setCursor(30, 15);
+    // Header - Moved up slightly
+    _oled->setCursor(30, 10);
     _oled->println("DLS Weather");
-    _oled->setCursor(40, 28);
+    _oled->setCursor(40, 22);
     _oled->println("Station");
     
     // Status at bottom
-    _oled->setCursor(0, 50);
+    _oled->setCursor(0, 42);
     _oled->print("WiFi: "); _oled->println(ssid);
+    
+    if (alias.length() > 0) {
+        _oled->setCursor(0, 54);
+        _oled->print("Name: "); _oled->println(alias);
+    }
     
     _oled->display();
 }

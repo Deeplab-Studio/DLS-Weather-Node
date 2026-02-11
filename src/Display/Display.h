@@ -67,7 +67,7 @@ public:
     void setNetworkInfo(String ip, String ssid, String status, bool connected);
     void setStatus(String status, bool isError = false); // New Status Bar method
 
-    void printStartup(String ssid);
+    void printStartup(String ssid, String alias = "");
     void showMessage(String msg);
 
     void off(); // Clear display and turn off
