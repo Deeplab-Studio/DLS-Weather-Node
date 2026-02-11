@@ -26,11 +26,8 @@ void DLSNetwork::onWiFiEvent(WiFiEvent_t event) {
         case ARDUINO_EVENT_WIFI_STA_GOT_IP:
             Serial.print("[WiFi] Got IP: ");
             Serial.println(WiFi.localIP());
-            Serial.print("[WiFi] Tx Power: ");
-            Serial.println(WiFi.getTxPower());
             if (_ledPin != -1) digitalWrite(_ledPin, HIGH);
-            _timeClient->begin();
-            _timeClient->forceUpdate();
+            // Don't call blocking NTP here. Handled in update().
             break;
         case ARDUINO_EVENT_WIFI_STA_DISCONNECTED:
             Serial.println("[WiFi] Disconnected");
@@ -50,6 +47,8 @@ void DLSNetwork::begin(String ssid, String pass, int ledPin) {
         pinMode(_ledPin, OUTPUT);
         digitalWrite(_ledPin, LOW);
     }
+
+    _timeClient->begin(); // Start UDP for NTP
 
     Serial.print("\n[WiFi] Configuring Ent-driven Connection to: "); Serial.println(_ssid);
 
@@ -71,15 +70,26 @@ void DLSNetwork::update() {
     // Stability Logic
     if (WiFi.status() == WL_CONNECTED) {
          if (_ledPin != -1) digitalWrite(_ledPin, HIGH);
-         _timeClient->update();
+         
+         // --- NTP Logic ---
+         // If time is invalid (1970), retry faster (every 1s) to sync ASAP
+         // default NTPClient update interval is 60s, which is too slow if first attempt fails.
+         if (_timeClient->getEpochTime() < 1600000000) { // Check for reasonable year (>2020)
+             static unsigned long lastNtpRetry = 0;
+             if (millis() - lastNtpRetry > 1000) {
+                 lastNtpRetry = millis();
+                 _timeClient->forceUpdate();
+                 if (_timeClient->getEpochTime() > 1600000000) {
+                     Serial.println("[NTP] Time Synced: " + _timeClient->getFormattedTime());
+                 }
+             }
+         } else {
+             _timeClient->update(); // Normal loop
+         }
+
          _lastReconnectAttempt = millis(); 
     } else {
         if (_ledPin != -1) digitalWrite(_ledPin, LOW);
-        
-        // With AutoReconnect(true), we rarely need manual intervention.
-        // However, if the stack gets stuck or logic fails (e.g. 5 mins disconnected), we reboot.
-        // We can also try a manual reconnect pulse if truly stuck but not reboot-worthy,
-        // but user specifically preferred AutoReconnect system.
         
         // If disconnected for more than 5 minutes, restart ESP
         if (millis() - _lastReconnectAttempt > 300000) {
