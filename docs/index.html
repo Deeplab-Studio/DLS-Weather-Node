@@ -308,7 +308,11 @@
                 background: var(--surface);
               ">
           <option value="78">19.5 dBm (Max)</option>
-          <option value="26" selected>8.5 dBm (Default)</option>
+          <option value="68">17 dBm</option>
+          <option value="60">15 dBm</option>
+          <option value="52">13 dBm</option>
+          <option value="44">11 dBm</option>
+          <option value="34" selected>8.5 dBm (Default)</option>
           <option value="8">2 dBm (Low)</option>
         </select>
       </div>
@@ -604,7 +608,7 @@
           lon: parseFloat(lon || 0),
           interval: parseInt(interval || 30),
           deepSleep: deepSleep,
-          txPower: parseInt(txPower || 26)
+          txPower: parseInt(txPower || 34)
         };
 
         const cmd = "\nSET_CONFIG " + JSON.stringify(config) + "\n";

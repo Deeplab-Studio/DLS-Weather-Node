@@ -121,7 +121,11 @@ void handleWebRoot() {
     html += "<label>WiFi Power</label><select name='txPower'>";
     int tx = config.getTxPower();
     html += "<option value='78'" + String(tx==78?" selected":"") + ">19.5 dBm (Max)</option>";
-    html += "<option value='26'" + String(tx==26?" selected":"") + ">8.5 dBm (Default)</option>";
+    html += "<option value='68'" + String(tx==68?" selected":"") + ">17 dBm</option>";
+    html += "<option value='60'" + String(tx==60?" selected":"") + ">15 dBm</option>";
+    html += "<option value='52'" + String(tx==52?" selected":"") + ">13 dBm</option>";
+    html += "<option value='44'" + String(tx==44?" selected":"") + ">11 dBm</option>";
+    html += "<option value='34'" + String(tx==34?" selected":"") + ">8.5 dBm (Default)</option>";
     html += "<option value='8'" + String(tx==8?" selected":"") + ">2 dBm (Low)</option>";
     html += "</select>";
     
