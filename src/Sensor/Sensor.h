@@ -24,6 +24,18 @@ struct LightData {
     bool valid = false;
 };
 
+struct WindData {
+    float speed = -1.0;
+    float direction = -1.0;
+    bool valid = false;
+};
+
+struct RainData {
+    float rate = -1.0;
+    float daily = -1.0;
+    bool valid = false;
+};
+
 enum SensorTypeAir {
     AIR_NONE,
     AIR_BME680,
@@ -46,6 +58,8 @@ public:
     // Data Readers
     bool getAirData(AirData &data);
     bool getLightData(LightData &data);
+    bool getWindData(WindData &data);
+    bool getRainData(RainData &data);
 
     // Getters for detected types
     SensorTypeAir getFoundAirSensor() const { return _foundAirSensor; }

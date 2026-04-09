@@ -19,4 +19,7 @@
 // Debug configuration
 #define DEBUG_MODE false
 
-
+// --- Weather Sensor Pins ---
+#define WDIR_PIN 35
+#define WSPEED_PIN 14
+#define RAIN_PIN 27

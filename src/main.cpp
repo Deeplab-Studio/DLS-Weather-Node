@@ -21,13 +21,8 @@ WebServer server(80); // Web Sunucusu
 // --- GLOBAL VARIABLES (For API & Loop) ---
 AirData latestAir;
 LightData latestLight;
-// Wind/Rain structs aren't defined in main scope yet, using placeholders for now
-// If Sensor.h has them, we should use them, but Display uses internal structs. 
-// We will rely on manual placeholders for API until Sensor logic is fully implemented.
-float latestWindSpeed = -1.0;
-float latestWindDir = -1.0;
-float latestRainRate = -1.0;
-float latestRainDaily = -1.0;
+WindData latestWind;
+RainData latestRain;
 
 // --- DEGISKENLER ---
 int lastSentMinute = -1;
@@ -74,12 +69,22 @@ void handleWeatherAPI() {
         doc["uv_index"] = nullptr;
     }
 
-    // Wind/Rain (Placeholders)
-    if (latestWindSpeed != -1.0) doc["wind_speed"] = latestWindSpeed; else doc["wind_speed"] = nullptr;
-    if (latestWindDir != -1.0) doc["wind_dir"] = latestWindDir; else doc["wind_dir"] = nullptr;
+    // Wind/Rain
+    if (latestWind.valid) {
+        if (latestWind.speed != -1.0) doc["wind_speed"] = latestWind.speed; else doc["wind_speed"] = nullptr;
+        if (latestWind.direction != -1.0) doc["wind_dir"] = latestWind.direction; else doc["wind_dir"] = nullptr;
+    } else {
+        doc["wind_speed"] = nullptr;
+        doc["wind_dir"] = nullptr;
+    }
     
-    if (latestRainRate != -1.0) doc["rain_rate"] = latestRainRate; else doc["rain_rate"] = nullptr;
-    if (latestRainDaily != -1.0) doc["rain_daily"] = latestRainDaily; else doc["rain_daily"] = nullptr;
+    if (latestRain.valid) {
+        if (latestRain.rate != -1.0) doc["rain_rate"] = latestRain.rate; else doc["rain_rate"] = nullptr;
+        if (latestRain.daily != -1.0) doc["rain_daily"] = latestRain.daily; else doc["rain_daily"] = nullptr;
+    } else {
+        doc["rain_rate"] = nullptr;
+        doc["rain_daily"] = nullptr;
+    }
 
     String response;
     serializeJson(doc, response);
@@ -319,9 +324,8 @@ void loop() {
         // --- 1. SENSOR OKUMA ---
         sensorManager.getAirData(latestAir);
         sensorManager.getLightData(latestLight);
-        // Placeholder for future Wind/Rain
-        // sensorManager.getWindData(latestWind);
-        // sensorManager.getRainData(latestRain);
+        sensorManager.getWindData(latestWind);
+        sensorManager.getRainData(latestRain);
 
         // --- Display Data Update ---
         // Pass -999.0 if invalid, implementation handles printing "NaN"
@@ -338,8 +342,14 @@ void loop() {
             -1.0 // Lux placeholder
         );
         
-        display.setWindData(-1.0, -1.0); // Speed, Dir
-        display.setRainData(-1.0, -1.0); // Rate, Daily
+        display.setWindData(
+            latestWind.valid ? latestWind.speed : -1.0,
+            latestWind.valid ? latestWind.direction : -1.0
+        );
+        display.setRainData(
+            latestRain.valid ? latestRain.rate : -1.0,
+            latestRain.valid ? latestRain.daily : -1.0
+        );
 
         // --- Serial Monitor Log ---
         Serial.println("\n[Sensor Data]");
@@ -357,6 +367,14 @@ void loop() {
         if (latestLight.valid) {
             Serial.print("UV Idx: "); Serial.println(latestLight.uvIndex);
         }
+        if (latestWind.valid) {
+            Serial.print("Wind Spd: "); Serial.print(latestWind.speed); Serial.println(" m/s");
+            Serial.print("Wind Dir: "); Serial.print(latestWind.direction); Serial.println(" deg");
+        }
+        if (latestRain.valid) {
+            Serial.print("Rain Rate: "); Serial.print(latestRain.rate); Serial.println(" mm/h");
+            Serial.print("Rain Daily: "); Serial.print(latestRain.daily); Serial.println(" mm");
+        }
         Serial.println("----------------");
 
         // --- 2. DLS Kutuphanesine Yazma (VALIDATION CHECK) ---
@@ -370,6 +388,16 @@ void loop() {
 
         if (latestLight.valid) {
              if (latestLight.uvIndex != -1.0) dls->uvIndex(latestLight.uvIndex);
+        }
+
+        if (latestWind.valid) {
+             if (latestWind.speed != -1.0) dls->windSpeed(latestWind.speed);
+             if (latestWind.direction != -1.0) dls->windDirection(latestWind.direction);
+        }
+
+        if (latestRain.valid) {
+             if (latestRain.rate != -1.0) dls->rainRate(latestRain.rate);
+             if (latestRain.daily != -1.0) dls->rainDaily(latestRain.daily);
         }
 
         // --- Battery Read & Send ---
@@ -464,7 +492,7 @@ void loop() {
         // NO, reading I2C too fast is bad. Every 2-5 seconds is good.
         
         static unsigned long lastSensorRead = 0;
-        if (millis() - lastSensorRead > 2000) {
+        if (millis() - lastSensorRead > 1000) {
             lastSensorRead = millis();
             sensorManager.getAirData(latestAir);
             sensorManager.getLightData(latestLight);
@@ -501,14 +529,35 @@ void loop() {
                 latestLight.valid ? latestLight.uvIndex : -1.0,
                 -1.0 
             );
-            // Wind/Rain placeholdes
-            display.setWindData(-1.0, -1.0);
-            display.setRainData(-1.0, -1.0); 
+            sensorManager.getWindData(latestWind);
+            sensorManager.getRainData(latestRain);
             
+            display.setWindData(
+                latestWind.valid ? latestWind.speed : -1.0,
+                latestWind.valid ? latestWind.direction : -1.0
+            );
+            display.setRainData(
+                latestRain.valid ? latestRain.rate : -1.0,
+                latestRain.valid ? latestRain.daily : -1.0
+            );
+            
+            // --- LOG ALL DATA EVERY SECOND FOR TESTING ---
+            Serial.println("\n--- 1s Test Log ---");
+            if (latestAir.valid) {
+                Serial.printf("Air: %.1fC | %.1f%% | %.1fhPa\n", latestAir.temperature, latestAir.humidity, latestAir.pressure);
+            }
+            if (latestWind.valid) {
+                Serial.printf("Wind: %.2f m/s | %.1f deg\n", latestWind.speed, latestWind.direction);
+            }
+            if (latestRain.valid) {
+                Serial.printf("Rain: %.2f mm/h | %.2f mm today\n", latestRain.rate, latestRain.daily);
+            }
+            Serial.println("-------------------");
+
             // Handle DEBUG MODE (Skip WiFi check for sending if Debug is ON?)
             // Actually, usually Debug mode just means "Don't crash if no WiFi"
             // But here we want to see sensor values on screen even if offline.
-            // Which is already happening because this block runs every 2s!
+            // Which is already happening because this block runs every 1s!
             // So we just need to ensure we don't block invalid operations.
         }
     }

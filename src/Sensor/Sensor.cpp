@@ -1,4 +1,40 @@
 #include "Sensor.h"
+#include <variant.h> // Pin definitions are here
+
+// --- Config Constants for Wind & Rain ---
+#define RAIN_MM_PER_TICK 0.2794
+#define WIND_CM_RADIUS 7.0
+#define WIND_FACTOR 0.0218
+
+// --- Interrupt Storage ---
+volatile unsigned long windPulses = 0;
+volatile unsigned long lastWindPulseTime = 0;
+unsigned long lastWindSampleTime = 0;
+
+volatile unsigned long rainTips = 0;
+volatile unsigned long dailyRainTips = 0;
+volatile unsigned long lastRainTipTime = 0;
+volatile unsigned long beforeLastRainTipTime = 0;
+unsigned long lastRainSampleTime = 0;
+
+// --- ISR (Interrupt Service Routines) ---
+void IRAM_ATTR windSpeedISR() {
+    unsigned long now = millis();
+    if (now - lastWindPulseTime > 15) { // 15ms debounce filter for reed switch
+        windPulses++;
+        lastWindPulseTime = now;
+    }
+}
+
+void IRAM_ATTR rainISR() {
+    unsigned long now = millis();
+    if (now - lastRainTipTime > 100) { // 100ms debounce
+        rainTips++;
+        dailyRainTips++;
+        beforeLastRainTipTime = lastRainTipTime;
+        lastRainTipTime = now;
+    }
+}
 
 Sensor::Sensor() {}
 
@@ -57,6 +93,22 @@ void Sensor::begin(TwoWire *wire) {
     } else {
         Serial.println("[Sensor] UV sensoru bulunamadi.");
     }
+
+    // --- WIND & RAIN PINS CONFIG ---
+#if defined(WDIR_PIN) && defined(WSPEED_PIN) && defined(RAIN_PIN)
+    pinMode(WDIR_PIN, INPUT); // ADC pin doesn't strictly need this but good practice
+    
+    // Most passive weather sensors pull to Ground
+    pinMode(WSPEED_PIN, INPUT_PULLUP);
+    pinMode(RAIN_PIN, INPUT_PULLUP);
+
+    attachInterrupt(digitalPinToInterrupt(WSPEED_PIN), windSpeedISR, CHANGE);
+    attachInterrupt(digitalPinToInterrupt(RAIN_PIN), rainISR, FALLING);
+    
+    lastWindSampleTime = millis();
+    lastRainSampleTime = millis();
+    Serial.println("[Sensor] Ruzgar ve Yagmur kesmeleri baslatildi.");
+#endif
 }
 
 bool Sensor::getAirData(AirData &data) {
@@ -124,5 +176,86 @@ bool Sensor::getLightData(LightData &data) {
             return false;
     }
     
+    return data.valid;
+}
+
+bool Sensor::getWindData(WindData &data) {
+    data.valid = false;
+#if defined(WDIR_PIN) && defined(WSPEED_PIN)
+
+    unsigned long now = millis();
+    unsigned long deltaMs = now - lastWindSampleTime;
+    
+    if (deltaMs > 0) {
+        // --- Calculate Wind Speed ---
+        // Save current pulses and reset counter via noInterrupts to prevent race condition
+        noInterrupts();
+        unsigned long pulses = windPulses;
+        windPulses = 0;
+        interrupts();
+
+        // 2 ticks = 1 rotation (based on python code)
+        float rotation_hz = (pulses / 2.0) / (deltaMs / 1000.0);
+        float circumference = WIND_CM_RADIUS * 2.0 * PI;
+        data.speed = rotation_hz * circumference * WIND_FACTOR;
+        
+        lastWindSampleTime = now;
+        
+        // --- Calculate Wind Direction ---
+        // Target mV array from Python script (0.9V = 900mV, etc.)
+        const float ADC_TO_MV[] = {900.0, 2000.0, 3000.0, 2800.0, 2500.0, 1500.0, 300.0, 600.0};
+        
+        // Read multiple times to stabilize like python while True loop
+        int closest_index = -1;
+        float closest_value = 99999.0;
+        float value = (float)analogReadMilliVolts(WDIR_PIN);
+
+        for (int i = 0; i < 8; i++) {
+            float distance = abs(ADC_TO_MV[i] - value);
+            if (distance < closest_value) {
+                closest_value = distance;
+                closest_index = i;
+            }
+        }
+        
+        if (closest_index != -1) {
+            data.direction = closest_index * 45.0;
+        }
+
+        data.valid = true;
+    }
+#endif
+    return data.valid;
+}
+
+bool Sensor::getRainData(RainData &data) {
+    data.valid = false;
+#if defined(RAIN_PIN)
+
+    unsigned long now = millis();
+    
+    // Safely extract rain components
+    noInterrupts();
+    unsigned long daily = dailyRainTips;
+    unsigned long t1 = beforeLastRainTipTime;
+    unsigned long t2 = lastRainTipTime;
+    interrupts();
+
+    // The rate is mm per hour based on the time between the last two bucket tips.
+    // If it hasn't rained (tipped) for > 5 minutes (300,000 ms), we consider rate as 0.
+    if (t2 == 0 || (now - t2) > 300000UL) {
+        data.rate = 0.0;
+    } else if (t1 > 0 && t2 > t1) {
+        unsigned long tipDeltaMs = t2 - t1;
+        data.rate = (3600000.0 / tipDeltaMs) * RAIN_MM_PER_TICK;
+    } else {
+        data.rate = 0.0;
+    }
+
+    data.daily = daily * RAIN_MM_PER_TICK;
+    data.valid = true;
+    lastRainSampleTime = now;
+    
+#endif
     return data.valid;
 }
