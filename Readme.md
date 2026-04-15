@@ -1,5 +1,7 @@
 # 🌦️ DLS Weather Node
 
+[![Sponsor](https://img.shields.io/badge/Sponsor-Deeplab--Studio-ea4aaa?style=for-the-badge&logo=github-sponsors)](https://github.com/sponsors/Deeplab-Studio)
+
 The purpose of this project is to support the **DLS Weather** initiative by enabling the deployment of **community-driven weather nodes**.
 
 With this service, collected weather data can be transmitted **for free to up to 5 different platforms simultaneously** through a **single API**.
