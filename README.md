@@ -2,96 +2,108 @@
 
 [![Sponsor](https://img.shields.io/badge/Sponsor-Deeplab--Studio-ea4aaa?style=for-the-badge&logo=github-sponsors)](https://github.com/sponsors/Deeplab-Studio)
 
-Community-driven weather nodes for the **DLS Weather** network. One API call publishes the same
-measurement to up to five services:
+Türkçe doküman: **[TR-README.md](TR-README.md)**
 
-- 📡 **APRS Weather Station** (amateur radio)
+The purpose of this project is to support the **DLS Weather** initiative by enabling the deployment of **community-driven weather nodes**.
+
+With this service, collected weather data can be transmitted **for free to up to 5 different platforms simultaneously** through a **single API**.
+
+Supported platforms:
+
+- 📡 **APRS Weather Station** (for amateur radio operators)
 - 🌍 **PWSWeather**
 - ☁️ **WeatherCloud**
 - 🌡️ **Weather Underground**
 - 🌬️ **Windy.com**
 
-Firmware version is defined once in [`include/version.h`](include/version.h) and reused by the web
-installer manifests.
+Firmware version is defined once in [`include/version.h`](include/version.h) and reused by the web installer manifests.
 
 ---
 
-## 🔌 Supported hardware
+## 🔌 Supported Hardware
 
-### Boards
+The DLS Weather Node is designed to work with various ESP32 boards, sensors, and displays. Below is the list of supported and tested hardware.
 
-| Board | Chip | Environment | Status | Notes |
+### 📟 Supported Devices
+
+| Device Name | Chip | Environment | Tested | Notes |
 | :--- | :--- | :--- | :---: | :--- |
-| **ESP32-WROOM / DevKit** | ESP32 | `esp32_wroom` | ✅ tested | Full feature set, wind + rain included |
-| **ESP32-C3 SuperMini** | ESP32-C3 | `esp32c3_super_mini` | ✅ tested | Compact / low power, I2C sensors only |
-| **ESP32-S3 SuperMini** | ESP32-S3 | `esp32s3_super_mini` | 🟡 new | 4 MB flash, I2C + wind + rain, RGB LED |
+| **Standard ESP32** | ESP32-WROOM | `esp32_wroom` | ✅ | Classic ESP32, full feature set |
+| **SuperMini ESP32-C3** | ESP32-C3 | `esp32c3_super_mini` | ✅ | Recommended board (low power, compact) |
+| **SuperMini ESP32-S2** | ESP32-S2 | `esp32s2_super_mini` | ❌ | Added in 1.1.1, not verified on hardware yet |
+| **SuperMini ESP32-S3** | ESP32-S3 | `esp32s3_super_mini` | ❌ | 4 MB flash, RGB LED, wind + rain pins |
+| **DevKitC ESP32-S3** | ESP32-S3 | `esp32s3_devkit` | ❌ | 8 MB flash, more free GPIOs |
 
-> Wind and rain pins are only defined for boards where they exist in `variant.h`. On the C3 the
-> corresponding pages are skipped automatically instead of showing empty `NaN` screens.
+> ❌ = builds and is wired up, but nobody has flashed it on that board yet. Pin numbers live in
+> `variants/<board>/variant.h`; compare them with your board's silkscreen before flashing.
 
-### Pin map (per board, edit `variants/<board>/variant.h`)
+### 🌡️ Supported Sensors
 
-| Signal | ESP32-WROOM | ESP32-C3 SuperMini | ESP32-S3 SuperMini |
-| :--- | :--- | :--- | :--- |
-| I2C SDA / SCL | 21 / 22 | 8 / 9 | 4 / 5 |
-| Sensor power (MOSFET) | 4 | 10 | 6 |
-| Battery ADC | 34 | 3 | 1 |
-| Wind direction (ADC) | 35 | – | 2 |
-| Wind speed (pulse) | 14 | – | 7 |
-| Rain gauge (pulse) | 27 | – | 8 |
-| Status LED | 2 | – | 48 (WS2812) |
-
-`ADC_MULTIPLIER` defaults to `1.6667` for a 1 MΩ + 1.5 MΩ divider (3.0–4.2 V Li-ion).
-
-### Sensors
-
-| Sensor | Bus | Measures | Notes |
-| :--- | :--- | :--- | :--- |
-| **BME680** | I2C 0x76/0x77 | Temp, humidity, pressure, gas | Auto-detected first (gas → IAQ in kΩ) |
-| **BME280** | I2C 0x76 | Temp, humidity, pressure | |
-| **BMP280** | I2C 0x76 | Temp, pressure | |
-| **SHT30/SHT31/SHT35** | I2C 0x44/0x45 | Temp, humidity | |
-| **SHTC3** | I2C | Temp, humidity | |
-| **VEML6075** | I2C | UV index | |
+| Sensor | Type | Tested | Measurements |
+| :--- | :--- | :---: | :--- |
+| **BMP280** | I2C | ✅ | Temperature, Pressure |
+| **BME280** | I2C | ✅ | Temperature, Humidity, Pressure |
+| **BME680** | I2C | ✅ | Temperature, Humidity, Pressure, Gas (IAQ) |
+| **SHT31** | I2C | ✅ | Temperature, Humidity |
+| **SHTC3** | I2C | ❌ | Temperature, Humidity |
+| **SHT35** | I2C | ❌ | Temperature, Humidity |
+| **VEML6075** | I2C | ❌ | UV Index (supported in code, not verified) |
+| **BH1750** | I2C | ❌ | Light Level (planned) |
 
 Detection order is BME680 → SHT3x → SHTC3 → BME280 → BMP280; the first responder wins and is printed
 on the serial log and on the device screen. Only one air sensor is used at a time.
 
-### Displays
+### 📺 Supported Displays
 
-| Controller | Size | Interface |
-| :--- | :--- | :--- |
-| **SSD1306** | 0.96"/1.3" OLED | I2C |
-| **SH1106** | 1.3" OLED | I2C |
+| Display Controller | Size | Tested | Interface |
+| :--- | :--- | :---: | :--- |
+| **SSD1306** | 0.96" / 1.3" OLED | ✅ | I2C |
+| **SH1106** | 1.3" OLED | ✅ | I2C |
 
 If no display is found the firmware runs headless.
 
-### Wiring
+### 🔌 Pin Map
 
-**ESP32-WROOM**
+| Signal | ESP32-WROOM | ESP32-C3 | ESP32-S2 | ESP32-S3 SuperMini | ESP32-S3 DevKitC |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| I2C SDA / SCL | 21 / 22 | 8 / 9 | 33 / 35 | 4 / 5 | 8 / 9 |
+| Sensor power (MOSFET) | 4 | 10 | 18 | 6 | 7 |
+| Battery ADC | 34 | 3 | 1 | 1 | 1 |
+| Wind direction (ADC) | 35 | – | 2 | 2 | 2 |
+| Wind speed (pulse) | 14 | – | 16 | 7 | 3 |
+| Rain gauge (pulse) | 27 | – | 17 | 8 | 4 |
+| Status LED | 2 | – | 15 | 48 (WS2812) | 48 (WS2812) |
 
-![ESP32 WROOM wiring](docs/images/diagram1.png)
+`ADC_MULTIPLIER` defaults to `1.6667` for a 1 MΩ + 1.5 MΩ divider (3.0–4.2 V Li-ion). Boards without
+wind/rain pins skip those readings and their OLED pages automatically.
 
-**ESP32-C3 SuperMini**
+### ESP32 Wroom 32
 
-![ESP32-C3 SuperMini wiring](docs/images/diagram2.png)
+![Configuration](docs/images/diagram1.png)
+
+### SuperMini ESP32-C3
+
+![Configuration](docs/images/diagram2.png)
 
 ---
 
-## 🚀 Build & flash
+## 🚀 Build & Flash
 
 Requires [PlatformIO](https://platformio.org/).
 
 ```bash
 pio run -e esp32_wroom            # classic ESP32
 pio run -e esp32c3_super_mini     # C3 SuperMini
+pio run -e esp32s2_super_mini     # S2 SuperMini
 pio run -e esp32s3_super_mini     # S3 SuperMini
-pio run -e esp32s3_super_mini -t upload
+pio run -e esp32s3_devkit         # S3 DevKitC-1
+
+pio run -e esp32c3_super_mini -t upload
 ```
 
-Each build copies `bootloader.bin`, `partitions.bin` (and `boot_app0.bin` when the partition table
-has an `otadata` section) plus `firmware.bin` into `docs/firmware/<env>/` and regenerates
-`manifest.json` / `manifest_update.json` for the web installer.
+Each build copies `bootloader.bin`, `partitions.bin` (and `boot_app0.bin` when the partition table has
+an `otadata` section — see `copy_firmware.py`) plus `firmware.bin` into `docs/firmware/<env>/` and
+regenerates `manifest.json` / `manifest_update.json` for the web installer.
 
 Browser installer: **https://deeplab-studio.github.io/DLS-Weather-Node/**
 
@@ -100,17 +112,56 @@ Browser installer: **https://deeplab-studio.github.io/DLS-Weather-Node/**
 
 ---
 
-## 🔑 Getting an API key
+## 🔑 Getting an API Key
 
-1. Register: <https://wx.deeplabstudio.com/register>
-2. Open **API Keys**: <https://wx.deeplabstudio.com/dashboard/api-keys>
-3. Press **+ Generate Key** and copy the value.
+### [1️⃣ Step – Register](https://wx.deeplabstudio.com/register)
 
-Then provision the node either from the web installer (USB) or from the device's own web UI.
+![Configuration](docs/images/img1.png)
+
+### [2️⃣ Step – Go to the API Keys Page](https://wx.deeplabstudio.com/dashboard/api-keys)
+
+![Configuration](docs/images/img2.png)
+
+### 3️⃣ Step – Generate a New Key
+
+Click on the `+ Generate Key` button.
+![Configuration](docs/images/img3.png)
+
+### 4️⃣ Step – Copy the API Key
+
+Copy and securely store your generated API key.
+![Configuration](docs/images/img4.png)
 
 ---
 
-## 🖥️ Device web UI
+## [⚙️ Installing DLS Weather Node on ESP32](https://deeplab-studio.github.io/DLS-Weather-Node/)
+
+### [1️⃣ Step – Open the Installer](https://deeplab-studio.github.io/DLS-Weather-Node/)
+
+![Configuration](docs/images/img5.png)
+
+### 2️⃣ Step – Connect and Install
+
+- Click **Connect**
+- Select **Install DLSWeather**
+  ![Configuration](docs/images/img6.png)
+
+### 3️⃣ Step – Configure Settings
+
+After installation, configure:
+
+- Wi-Fi credentials
+- API key, station ID, coordinates
+- Sensor settings
+  ![Configuration](docs/images/img7.png)
+
+### [4️⃣ Step – Verify on the Website](https://wx.deeplabstudio.com/)
+
+You can monitor your node from the web dashboard.
+
+---
+
+## 🖥️ Device Web UI
 
 Once the node is on Wi-Fi it serves a small local UI (no internet needed, no CDN):
 
@@ -126,8 +177,6 @@ http://<device-ip>/
   DNS-rebinding/CSRF attempts from web pages.
 - Secrets are never echoed back: leave the password/API-key field empty to keep the stored value.
 
-Endpoints (all behind the PIN session):
-
 | Endpoint | Description |
 | :--- | :--- |
 | `GET /` | Status + settings page |
@@ -141,7 +190,7 @@ Endpoints (all behind the PIN session):
 | Command | Effect |
 | :--- | :--- |
 | `GET_CONFIG` | Dump full config as JSON (used by the installer) |
-| `GET_CONFIG MASKED` | Same, with password / API key masked |
+| `GET_CONFIG MASKED` | Same, with password / API key / PIN masked |
 | `SET_CONFIG {json}` | Validate, store, restart (`CONFIG_SAVED` or `VALIDATION_ERROR ...`) |
 | `info` | Print current settings (secrets masked) |
 | `pin` | Reprint the web PIN |
@@ -152,7 +201,7 @@ network-facing surface and is PIN protected.
 
 ---
 
-## ⚡ Power behaviour
+## ⚡ Power Behaviour
 
 - **Deep sleep off** – node stays online, publishes every *interval* minutes.
 - **Deep sleep on** – publish, then sleep for exactly one interval. A 5-minute configuration window
@@ -166,29 +215,53 @@ network-facing surface and is PIN protected.
 
 ---
 
-## 🔗 Using the DLS Weather API in other projects
+## 🔗 Using DLS Weather API in Other Projects
+
+The DLS Weather API is open for integration with your own projects.
+
+### API Endpoint
 
 ```
 POST https://wx-api.deeplabstudio.com/v1/ingest/weather
-Content-Type: application/json
-x-api-key: <your key>
 ```
+
+### Required Headers
+
+```
+Content-Type: application/json
+x-api-key: ***
+```
+
+### Example Payload
 
 ```json
 {
   "stationId": "ST-E9F9AF",
   "timestamp": 1769449600,
-  "location": { "lat": 41.0082, "lon": 28.9784 },
-  "environment": {
-    "temperature": 22.5,
-    "humidity": 60,
-    "pressure": 1013,
-    "uv_index": 3.5,
-    "air_quality": 45
+  "location": {
+    "lat": 0.0,
+    "lon": 0.0
   },
-  "wind": { "speed": 5.2, "direction": 180 },
-  "rain": { "rate": 0, "daily": 2.5 },
-  "power": { "battery": 85, "voltage": 4.1, "solar": 5.2 }
+  "environment": {
+    "temperature": 22.5,      // Optional
+    "humidity": 60,           // Optional
+    "pressure": 1013,         // Optional
+    "uv_index": 3.5,          // Optional
+    "air_quality": 45         // Optional
+  },
+  "wind": {
+    "speed": 5.2,             // Optional
+    "direction": 180          // Optional
+  },
+  "rain": {
+    "rate": 0,                // Optional
+    "daily": 2.5              // Optional
+  },
+  "power": {
+    "battery": 85,            // Optional Percent
+    "voltage": 4.1,           // Optional Volts
+    "solar": 5.2              // Optional Volts
+  }
 }
 ```
 
@@ -196,7 +269,7 @@ Every section is optional; the firmware only sends fields it actually measured.
 
 ---
 
-## 🔒 Security notes
+## 🔒 Security Notes
 
 - The configuration UI is HTTP on the local network. It is PIN protected and hardens headers
   (`CSP`, `nosniff`, `no-referrer`, `no-store`), but traffic is not encrypted — do not expose port 80
@@ -211,7 +284,7 @@ Every section is optional; the firmware only sends fields it actually measured.
 
 ---
 
-## 📁 Repository layout
+## 📁 Repository Layout
 
 ```
 src/
@@ -228,9 +301,8 @@ docs/                      GitHub Pages web installer + prebuilt binaries
 
 ---
 
-## 🤝 Contributing
+## 🤝 Contribution & Support
 
-Issues and pull requests are welcome. Please keep `pio run` green for all three environments and
-update the pin table when adding a board.
+This is a community-driven project. Feel free to contribute, deploy nodes, or share feedback to help improve the DLS Weather ecosystem.
 
-📡 **DLS Weather — Community Powered Weather Data Network**
+📡 **DLS Weather – Community Powered Weather Data Network**
