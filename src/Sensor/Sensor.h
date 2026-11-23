@@ -9,30 +9,34 @@
 #include <Adafruit_SHT31.h>
 #include <Adafruit_VEML6075.h>
 
+// Sentinel: "olcum yok". NaN kullanilir; boylece API katmani ve ekran
+// tek bir kural ile (isfinite) ayirt eder.
+#define SENSOR_NAN (NAN)
+
 struct AirData {
-    float temperature = -999.0;
-    float humidity = -999.0;
-    float pressure = -999.0;
-    float gasResistance = -999.0;
+    float temperature = NAN;
+    float humidity = NAN;
+    float pressure = NAN;      // hPa
+    float gasResistance = NAN; // kOhm (BME680)
     bool valid = false;
 };
 
 struct LightData {
-    float uvIndex = -1.0;
-    float uva = -1.0;
-    float uvb = -1.0;
+    float uvIndex = NAN;
+    float uva = NAN;
+    float uvb = NAN;
     bool valid = false;
 };
 
 struct WindData {
-    float speed = -1.0;
-    float direction = -1.0;
+    float speed = NAN;     // m/s
+    float direction = NAN; // derece
     bool valid = false;
 };
 
 struct RainData {
-    float rate = -1.0;
-    float daily = -1.0;
+    float rate = NAN;  // mm/saat
+    float daily = NAN; // mm (gunluk toplam)
     bool valid = false;
 };
 
@@ -54,25 +58,38 @@ class Sensor {
 public:
     Sensor();
     void begin(TwoWire *wire = &Wire);
-    
+
     // Data Readers
     bool getAirData(AirData &data);
     bool getLightData(LightData &data);
     bool getWindData(WindData &data);
     bool getRainData(RainData &data);
 
-    // Getters for detected types
+    // Gun degisiminde gunluk yagis sayacini sifirlar (NTP epoch gun).
+    // Donen deger: yeni gunluk toplam (mm) - NVS'e yazmak icin.
+    float beginRainDay(int epochDay);
+    // Yeniden baslatma/uyku sonrasi gunluk toplamin geri yuklenmesi.
+    void restoreRainDaily(float mm);
+
+    // Donanim var mi?
+    bool hasAir() const { return _foundAirSensor != AIR_NONE; }
+    bool hasLight() const { return _foundLightSensor != LIGHT_NONE; }
+    static bool hasWindRain();
+
     SensorTypeAir getFoundAirSensor() const { return _foundAirSensor; }
     SensorTypeLight getFoundLightSensor() const { return _foundLightSensor; }
+    const char *getAirSensorName() const;
+    const char *getLightSensorName() const;
 
 private:
-    TwoWire *_i2c;
-    
-    // Detected Types
+    TwoWire *_i2c = nullptr;
+
     SensorTypeAir _foundAirSensor = AIR_NONE;
     SensorTypeLight _foundLightSensor = LIGHT_NONE;
 
-    // Sensor Objects
+    float _rainDailyBase = 0.0f; // uygulama basinda geri yuklenen toplam
+    int _rainDay = -1;
+
     Adafruit_BME680 _bme680;
     Adafruit_BME280 _bme280;
     Adafruit_BMP280 _bmp280;

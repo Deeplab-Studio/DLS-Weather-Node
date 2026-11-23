@@ -7,31 +7,49 @@ DLSNetwork::DLSNetwork() {
     _txPower = WIFI_POWER_8_5dBm;
 }
 
-void DLSNetwork::setTxPower(wifi_power_t power) {
-    _txPower = power;
-    if (isConnected()) {
-        WiFi.setTxPower(_txPower);
+bool DLSNetwork::isValidTxPower(int v) {
+    switch (v) {
+        case 78: case 68: case 60: case 52: case 44: case 34: case 26: case 8:
+            return true;
+        default:
+            return false;
     }
+}
+
+void DLSNetwork::setTxPower(wifi_power_t power) {
+    if (!isValidTxPower((int)power)) {
+        Serial.println("[WiFi] Gecersiz TX guc degeri, 8.5 dBm kullanilacak.");
+        power = WIFI_POWER_8_5dBm;
+    }
+    _txPower = power;
+    if (isConnected()) WiFi.setTxPower(_txPower);
+}
+
+void DLSNetwork::setLed(bool on) {
+    if (_ledPin < 0) return;
+#if defined(LED_IS_RGB)
+    // WS2812: duz digitalWrite ile rengi kontrol edilemez
+    if (on) neopixelWrite(_ledPin, 0, 24, 0);
+    else neopixelWrite(_ledPin, 0, 0, 0);
+#else
+    digitalWrite(_ledPin, on ? HIGH : LOW);
+#endif
 }
 
 void DLSNetwork::onWiFiEvent(WiFiEvent_t event) {
     switch (event) {
         case ARDUINO_EVENT_WIFI_STA_START:
-            Serial.println("[WiFi] Station Started");
-            WiFi.setTxPower(_txPower); // Ensure power is set when STA starts
+            WiFi.setTxPower(_txPower);
             break;
         case ARDUINO_EVENT_WIFI_STA_CONNECTED:
-            Serial.println("[WiFi] Connected to Access Point");
+            Serial.println("[WiFi] Erisim noktasina baglandi.");
             break;
         case ARDUINO_EVENT_WIFI_STA_GOT_IP:
-            Serial.print("[WiFi] Got IP: ");
+            Serial.print("[WiFi] IP: ");
             Serial.println(WiFi.localIP());
-            if (_ledPin != -1) digitalWrite(_ledPin, HIGH);
-            // Don't call blocking NTP here. Handled in update().
             break;
         case ARDUINO_EVENT_WIFI_STA_DISCONNECTED:
-            Serial.println("[WiFi] Disconnected");
-            if (_ledPin != -1) digitalWrite(_ledPin, LOW);
+            Serial.println("[WiFi] Baglanti koptu.");
             break;
         default:
             break;
@@ -43,60 +61,67 @@ void DLSNetwork::begin(String ssid, String pass, int ledPin) {
     _pass = pass;
     _ledPin = ledPin;
 
-    if (_ledPin != -1) {
+    if (_ledPin >= 0) {
+#if defined(LED_IS_RGB)
+        // neopixelWrite pini kendisi surer
+#else
         pinMode(_ledPin, OUTPUT);
         digitalWrite(_ledPin, LOW);
+#endif
+        setLed(false);
     }
 
-    // _timeClient->begin(); // MOVED DOWN: Must be after WiFi init to avoid crash
+    Serial.print("\n[WiFi] Baglaniliyor: ");
+    Serial.println(_ssid);
 
-    Serial.print("\n[WiFi] Configuring Ent-driven Connection to: "); Serial.println(_ssid);
-
-    // Register Event Handler
     WiFi.onEvent(std::bind(&DLSNetwork::onWiFiEvent, this, std::placeholders::_1));
 
-    // Professional Setup as requested
     WiFi.mode(WIFI_STA);
-    WiFi.persistent(false);      // Don't save credentials to Flash
-    WiFi.setAutoReconnect(true); // Let ESP32 background task handle reconnection
-    
+    WiFi.persistent(false);
+    WiFi.setAutoReconnect(true);
+    WiFi.setSleep(false); // Olcum gonderiminde gecikmeyi azaltir
+
     WiFi.begin(_ssid.c_str(), _pass.c_str());
-    
-    // Attempt to set power (also handled in STA_START event for robustness)
     WiFi.setTxPower(_txPower);
 
-    _timeClient->begin(); // Start UDP for NTP (Safe here after WiFi init)
+    _timeClient->begin();
+
+    _lastReconnectAttempt = millis(); // 5 dk sayaci buradan baslar
+}
+
+bool DLSNetwork::waitConnected(uint32_t timeoutMs) {
+    uint32_t start = millis();
+    while (millis() - start < timeoutMs) {
+        if (WiFi.status() == WL_CONNECTED) return true;
+        delay(100);
+    }
+    return WiFi.status() == WL_CONNECTED;
 }
 
 void DLSNetwork::update() {
-    // Stability Logic
     if (WiFi.status() == WL_CONNECTED) {
-         if (_ledPin != -1) digitalWrite(_ledPin, HIGH);
-         
-         // --- NTP Logic ---
-         // If time is invalid (1970), retry faster (every 1s) to sync ASAP
-         // default NTPClient update interval is 60s, which is too slow if first attempt fails.
-         if (_timeClient->getEpochTime() < 1600000000) { // Check for reasonable year (>2020)
-             static unsigned long lastNtpRetry = 0;
-             if (millis() - lastNtpRetry > 1000) {
-                 lastNtpRetry = millis();
-                 _timeClient->forceUpdate();
-                 if (_timeClient->getEpochTime() > 1600000000) {
-                     Serial.println("[NTP] Time Synced: " + _timeClient->getFormattedTime());
-                 }
-             }
-         } else {
-             _timeClient->update(); // Normal loop
-         }
+        setLed(true);
 
-         _lastReconnectAttempt = millis(); 
+        if (!timeSynced()) {
+            static unsigned long lastNtpRetry = 0;
+            if (millis() - lastNtpRetry > 2000) {
+                lastNtpRetry = millis();
+                _timeClient->forceUpdate();
+                if (timeSynced()) {
+                    Serial.println("[NTP] Zaman alindi: " + _timeClient->getFormattedTime());
+                }
+            }
+        } else {
+            _timeClient->update();
+        }
+
+        _lastReconnectAttempt = millis();
     } else {
-        if (_ledPin != -1) digitalWrite(_ledPin, LOW);
-        
-        // If disconnected for more than 5 minutes, restart ESP
-        if (millis() - _lastReconnectAttempt > 300000) {
-            Serial.println("[WiFi] Stuck disconnected for 5 mins. Restarting...");
-            delay(1000);
+        setLed(false);
+        // 5 dakika boyunca baglanilamazsa yeniden baslat
+        if (millis() - _lastReconnectAttempt > 300000UL) {
+            Serial.println("[WiFi] 5 dakikadir baglanti yok, yeniden baslatiliyor...");
+            delay(200);
             ESP.restart();
         }
     }
@@ -106,24 +131,39 @@ bool DLSNetwork::isConnected() {
     return WiFi.status() == WL_CONNECTED;
 }
 
+int DLSNetwork::getRSSI() {
+    return isConnected() ? WiFi.RSSI() : 0;
+}
+
 unsigned long DLSNetwork::getEpochTime() {
-    return _timeClient->getEpochTime();
+    return _timeClient ? _timeClient->getEpochTime() : 0;
+}
+
+int DLSNetwork::getEpochDay() {
+    unsigned long e = getEpochTime();
+    return timeSynced() ? (int)(e / 86400UL) : 0;
+}
+
+bool DLSNetwork::timeSynced() {
+    return getEpochTime() > 1600000000UL; // 2020'den sonrasi
 }
 
 int DLSNetwork::getMinutes() {
-    return _timeClient->getMinutes();
+    return _timeClient ? _timeClient->getMinutes() : 0;
 }
 
 int DLSNetwork::getSeconds() {
-    return _timeClient->getSeconds();
+    return _timeClient ? _timeClient->getSeconds() : 0;
 }
 
-void DLSNetwork::startMDNS(const char* hostname) {
+bool DLSNetwork::startMDNS(const char *hostname) {
+    if (!hostname || strlen(hostname) == 0) return false;
     if (MDNS.begin(hostname)) {
-        Serial.printf("[mDNS] Started: %s.local\n", hostname);
+        Serial.printf("[mDNS] http://%s.local\n", hostname);
         MDNS.addService("http", "tcp", 80);
-        MDNS.addService("dls_weather", "udp", 12345); 
-    } else {
-        Serial.println("[mDNS] Failed to start!");
+        MDNS.addService("dls_weather", "udp", 12345);
+        return true;
     }
+    Serial.println("[mDNS] Baslatilamadi.");
+    return false;
 }

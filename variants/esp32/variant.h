@@ -2,6 +2,11 @@
 
 #include <Arduino.h>
 
+// Bu baslik yalnizca ESP32 (klasik) hedefi icin derlenmelidir.
+#if !defined(DLS_TARGET_ESP32)
+#error "Yanlis variant.h: esp32/variant.h secildi ama hedef ESP32 degil."
+#endif
+
 // --- Pin Definitions ---
 #define LED_PIN 2
 
@@ -15,6 +20,7 @@
 // ADC Pins
 #define ADC_PIN 34
 #define ADC_MULTIPLIER 1.6667 // Divider: 1M + 1.5M -> 2.5/1.5 = 1.666...
+#define ADC_SAMPLE_COUNT 8    // Yuksek empedansli bölücü icin ortalama
 
 // Debug configuration
 #define DEBUG_MODE false

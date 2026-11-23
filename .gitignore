@@ -1,1 +1,17 @@
-.pio
+# PlatformIO
+.pio/
+.pioenvs/
+.piolibdeps/
+
+# macOS / Windows / IDE
+.DS_Store
+Thumbs.db
+.vscode/c_cpp_properties.json
+.vscode/launch.json
+*.code-workspace
+
+# Python
+__pycache__/
+*.py[cod]
+
+# Not: docs/firmware/*.bin web installer icin bilerek takip edilir.

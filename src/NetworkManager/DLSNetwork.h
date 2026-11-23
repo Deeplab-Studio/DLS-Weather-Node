@@ -11,27 +11,36 @@ public:
     DLSNetwork();
     void begin(String ssid, String pass, int ledPin = -1);
     void update();
-    void startMDNS(const char* hostname);
-    
+    bool startMDNS(const char *hostname);
+
     void setTxPower(wifi_power_t power);
     void onWiFiEvent(WiFiEvent_t event);
-    
-    // Status
+
+    // Durum
     bool isConnected();
-    
-    // Time
+    int getRSSI();
+
+    // Zaman
     unsigned long getEpochTime();
+    int getEpochDay();
+    bool timeSynced();
     int getMinutes();
     int getSeconds();
 
+    // Baglanti bekleme (setup icin, blocking ama sinirli)
+    bool waitConnected(uint32_t timeoutMs);
+
+    static bool isValidTxPower(int v);
+
 private:
     WiFiUDP _ntpUDP;
-    NTPClient* _timeClient;
-    
+    NTPClient *_timeClient = nullptr;
+
     String _ssid;
     String _pass;
-    int _ledPin;
+    int _ledPin = -1;
     wifi_power_t _txPower = WIFI_POWER_8_5dBm;
+    uint32_t _lastReconnectAttempt = 0;
 
-    unsigned long _lastReconnectAttempt;
+    void setLed(bool on);
 };
