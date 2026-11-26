@@ -160,7 +160,7 @@ static bool sendWeather() {
         return true;
     }
 
-    String errText = (code == -1) ? String("WiFi yok") : (code > 0 ? "HTTP " + String(code) : "Baglanti hatasi");
+    String errText = !network.isConnected() ? String("WiFi yok") : (code > 0 ? "HTTP " + String(code) : "Baglanti hatasi");
     Serial.println("[Send] HATA: " + errText);
     display.setStatus(errText, true);
     webui.setSendStatus(errText);
@@ -226,6 +226,8 @@ void setup() {
 #endif
 
     display.begin(&Wire);
+    sensorManager.begin(&Wire);
+
     display.setWebPin(config.getWebPin());
     display.setAvailableSensors(sensorManager.hasAir(), sensorManager.hasLight(),
                                 Sensor::hasWindRain());
@@ -241,22 +243,19 @@ void setup() {
         }
     }
 
-    WiFi.setHostname(config.getHostname().c_str());
+    network.setHostname(config.getHostname());
     network.setTxPower((wifi_power_t)config.getTxPower());
     network.begin(config.getSSID(), config.getPass(), LED_PIN);
 
     sensorManager.restoreRainDaily(0.0f);
 
-    // Web arayuzu WiFi'dan bagimsiz baslatilir (baglanti gelince erisilebilir)
-    webui.begin(&config, &network);
     webui.setSensorsReport(String(sensorManager.getAirSensorName()) + " / UV:" +
                           String(sensorManager.getLightSensorName()) +
                           (Sensor::hasWindRain() ? " / ruzgar+yagmur" : ""));
+    webui.begin(&config, &network);
 
     if (network.waitConnected(20000)) {
-        network.startMDNS(config.getHostname().c_str());
-        Serial.printf("[Net] http://%s.local  (%s)\n", config.getHostname().c_str(),
-                      WiFi.localIP().toString().c_str());
+        Serial.printf("[Net] Web UI: http://%s\n", WiFi.localIP().toString().c_str());
         // Gonderim icin gecerli zaman gerekli: en fazla 15 sn bekle
         uint32_t waitStart = millis();
         while (!network.timeSynced() && millis() - waitStart < 15000) {
@@ -308,6 +307,10 @@ void loop() {
         }
     } else if (retryCount > 0 && retryCount <= MAX_RETRIES && now - lastAttemptMs > RETRY_DELAY_MS) {
         attempt = true;
+    } else if (!firstSendDone && retryCount > MAX_RETRIES) {
+        // Ilk gonderim 3 denemede de basarisiz olduysa 15 sn'de bir tekrarlamamak icin interval kadar bekle
+        attempt = (now - lastAttemptMs) >= (unsigned long)interval * 60000UL;
+        if (attempt) retryCount = 0;
     } else if (retryCount == 0) {
         if (!firstSendDone) {
             // Saat yoksa 5 dakika sonra yine de dene (aksi halde NTP engelliyse hic gonderilmez)
@@ -340,8 +343,10 @@ void loop() {
             retryCount++;
             if (retryCount > MAX_RETRIES) {
                 Serial.println("[Send] Deneme siniri asildi, sonraki aralik beklenecek.");
-                retryCount = 0;
-                if (config.isDeepSleepEnabled()) enterDeepSleep();
+                if (config.isDeepSleepEnabled()) {
+                    retryCount = 0;
+                    enterDeepSleep();
+                }
             }
         }
     }

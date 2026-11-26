@@ -26,39 +26,36 @@ DLS Weather Node farklı ESP32 kartları, sensörler ve ekranlarla çalışacak 
 
 ### 📟 Desteklenen Kartlar
 
-| Kart Adı | Çip | Ortam (env) | Test | Notlar |
-| :--- | :--- | :--- | :---: | :--- |
-| **Standart ESP32** | ESP32-WROOM | `esp32_wroom` | ✅ | Klasik ESP32, tüm özellikler |
-| **SuperMini ESP32-C3** | ESP32-C3 | `esp32c3_super_mini` | ✅ | Önerilen kart (düşük güç, kompakt) |
-| **SuperMini ESP32-S2** | ESP32-S2 | `esp32s2_super_mini` | ❌ | 1.1.1'de eklendi, donanımda henüz doğrulanmadı |
-| **SuperMini ESP32-S3** | ESP32-S3 | `esp32s3_super_mini` | ❌ | 4 MB flash, RGB LED, rüzgar + yağmur pinleri |
-| **DevKitC ESP32-S3** | ESP32-S3 | `esp32s3_devkit` | ❌ | 8 MB flash, daha fazla boş GPIO |
-
-> ❌ = derleniyor ve pin tanımları hazır, ancak henüz o kartta fişe takılıp denenmedi. Pin numaraları
-> `variants/<kart>/variant.h` dosyasında; yüklemeden önce kartın üzerindeki serigrafi ile karşılaştırın.
+| Kart Adı | Çip | Ortam (env) | Notlar |
+| :--- | :--- | :--- | :--- |
+| **Standart ESP32** | ESP32-WROOM | `esp32_wroom` | Klasik ESP32, tüm özellikler |
+| **SuperMini ESP32-C3** | ESP32-C3 | `esp32c3_super_mini` | Önerilen kart (düşük güç, kompakt) |
+| **SuperMini ESP32-S2** | ESP32-S2 | `esp32s2_super_mini` | 4 MB flash, dahili USB, rüzgar + yağmur pinleri |
+| **SuperMini ESP32-S3** | ESP32-S3 | `esp32s3_super_mini` | 4 MB flash, RGB LED, rüzgar + yağmur pinleri |
+| **DevKitC ESP32-S3** | ESP32-S3 | `esp32s3_devkit` | 8 MB flash, daha fazla boş GPIO |
 
 ### 🌡️ Desteklenen Sensörler
 
-| Sensör | Tip | Test | Ölçümler |
-| :--- | :--- | :---: | :--- |
-| **BMP280** | I2C | ✅ | Sıcaklık, Basınç |
-| **BME280** | I2C | ✅ | Sıcaklık, Nem, Basınç |
-| **BME680** | I2C | ✅ | Sıcaklık, Nem, Basınç, Gaz (IAQ) |
-| **SHT31** | I2C | ✅ | Sıcaklık, Nem |
-| **SHTC3** | I2C | ❌ | Sıcaklık, Nem |
-| **SHT35** | I2C | ❌ | Sıcaklık, Nem |
-| **VEML6075** | I2C | ❌ | UV İndeksi (kodda var, doğrulanmadı) |
-| **BH1750** | I2C | ❌ | Işık Seviyesi (planlı) |
+| Sensör | Tip | Ölçümler |
+| :--- | :--- | :--- |
+| **BMP280** | I2C | Sıcaklık, Basınç |
+| **BME280** | I2C | Sıcaklık, Nem, Basınç |
+| **BME680** | I2C | Sıcaklık, Nem, Basınç, Gaz (IAQ) |
+| **SHT31** | I2C | Sıcaklık, Nem |
+| **SHTC3** | I2C | Sıcaklık, Nem |
+| **SHT35** | I2C | Sıcaklık, Nem |
+| **VEML6075** | I2C | UV İndeksi |
+| **BH1750** | I2C | Işık Seviyesi (planlı) |
 
 Tarama sırası BME680 → SHT3x → SHTC3 → BME280 → BMP280 şeklindedir; ilk cevap veren sensör kullanılır
 ve hem seri loga hem cihaz ekranına yazılır. Aynı anda yalnızca bir hava sensörü kullanılır.
 
 ### 📺 Desteklenen Ekranlar
 
-| Ekran Kontrolcüsü | Boyut | Test | Arayüz |
-| :--- | :--- | :---: | :--- |
-| **SSD1306** | 0.96" / 1.3" OLED | ✅ | I2C |
-| **SH1106** | 1.3" OLED | ✅ | I2C |
+| Ekran Kontrolcüsü | Boyut | Arayüz |
+| :--- | :--- | :--- |
+| **SSD1306** | 0.96" / 1.3" OLED | I2C |
+| **SH1106** | 1.3" OLED | I2C |
 
 Ekran bulunamazsa cihaz ekransız (headless) çalışmaya devam eder.
 
@@ -166,24 +163,24 @@ Cihazınızı web panelinden izleyebilirsiniz.
 Cihaz Wi-Fi'ye bağlandıktan sonra küçük bir yerel arayüz sunar (internet gerekmez, CDN kullanmaz):
 
 ```
-http://dls-weather-<istasyon>.local     # mDNS
 http://<cihaz-ip>/
 ```
 
 - **PIN korumalı.** İlk açılışta 6 haneli bir PIN üretilir, NVS'e yazılır ve OLED açılış ekranında,
   `NETWORK` sayfasında ve seri port açılış logunda gösterilir (`pin` komutu tekrar yazdırır).
 - 5 hatalı PIN denemesinden sonra 60 saniye kilit uygulanır; oturum çerezi 12 saat geçerlidir.
-- `Host` başlığı doğrulanır (IP veya `*.local`) ve çapraz kaynaklı `POST` istekleri reddedilir; bu,
+- `Host` başlığı doğrulanır ve çapraz kaynaklı `POST` istekleri reddedilir; bu,
   web sayfalarından gelen DNS-rebinding/CSRF denemelerini engeller.
 - Sırlar geri yazılmaz: şifre/API anahtarı alanını boş bırakırsanız kayıtlı değer korunur.
+- `GET /api/weather` uç noktası şifresiz/PIN'siz açıktır (CORS destekli); yerel sistemler ve betikler doğrudan veri çekebilir.
 
 | Uç nokta | Açıklama |
 | :--- | :--- |
-| `GET /` | Durum + ayarlar sayfası |
-| `POST /save` | Ayarları doğrular, kaydeder ve yeniden başlatır |
-| `GET /api/weather` | Son ölçüm (JSON) |
-| `GET /api/status` | Yazılım sürümü, çalışma süresi, RSSI, heap, sensör listesi |
-| `POST /restart` | Cihazı yeniden başlatır |
+| `GET /` | Durum + ayarlar sayfası (PIN korumalı) |
+| `POST /save` | Ayarları doğrular, kaydeder ve yeniden başlatır (PIN korumalı) |
+| `GET /api/weather` | Son ölçüm JSON verisi (herkese açık, PIN gerektirmez) |
+| `GET /api/status` | Yazılım sürümü, çalışma süresi, RSSI, heap, sensör listesi (PIN korumalı) |
+| `POST /restart` | Cihazı yeniden başlatır (PIN korumalı) |
 
 ### Seri konsol (115200 baud)
 
@@ -293,7 +290,7 @@ src/
   Config/                  NVS ayarları, doğrulama, seri konsol
   Sensor/                  I2C otomatik algılama, rüzgar/yağmur ISR, günlük yağış
   Display/                 OLED sayfaları (olmayan sensörleri atlar)
-  NetworkManager/          Wi-Fi, NTP, mDNS, TX gücü, LED
+  NetworkManager/          Wi-Fi, NTP, TX gücü, LED
   WebUI/                   PIN korumalı arayüz + JSON API (HTML PROGMEM'de)
 variants/<kart>/           variant.h pin haritası + PlatformIO ortamı
 include/version.h          tek yazılım sürümü kaynağı

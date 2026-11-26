@@ -159,7 +159,7 @@ label.switch{margin:16px 0 0}
 
       <fieldset><legend>Cihaz</legend>
         <label for="api">API anahtarı</label>
-        <input id="api" name="api" type="password" maxlength="64" placeholder="%APIPH%" value="">
+        <input id="api" name="api" type="password" maxlength="128" placeholder="%APIPH%" value="">
         <p class="help">Boş bırakırsanız kayıtlı anahtar korunur.</p>
         <label for="station">İstasyon ID</label>
         <input id="station" name="station" maxlength="32" required value="%STATIONV%" pattern="[A-Za-z0-9_-]+">

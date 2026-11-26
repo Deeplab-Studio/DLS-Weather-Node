@@ -77,9 +77,11 @@ void DLSNetwork::begin(String ssid, String pass, int ledPin) {
     WiFi.onEvent(std::bind(&DLSNetwork::onWiFiEvent, this, std::placeholders::_1));
 
     WiFi.mode(WIFI_STA);
+    if (_hostname.length() > 0) {
+        WiFi.setHostname(_hostname.c_str());
+    }
     WiFi.persistent(false);
     WiFi.setAutoReconnect(true);
-    WiFi.setSleep(false); // Olcum gonderiminde gecikmeyi azaltir
 
     WiFi.begin(_ssid.c_str(), _pass.c_str());
     WiFi.setTxPower(_txPower);
@@ -154,16 +156,4 @@ int DLSNetwork::getMinutes() {
 
 int DLSNetwork::getSeconds() {
     return _timeClient ? _timeClient->getSeconds() : 0;
-}
-
-bool DLSNetwork::startMDNS(const char *hostname) {
-    if (!hostname || strlen(hostname) == 0) return false;
-    if (MDNS.begin(hostname)) {
-        Serial.printf("[mDNS] http://%s.local\n", hostname);
-        MDNS.addService("http", "tcp", 80);
-        MDNS.addService("dls_weather", "udp", 12345);
-        return true;
-    }
-    Serial.println("[mDNS] Baslatilamadi.");
-    return false;
 }

@@ -4,14 +4,13 @@
 #include <WiFi.h>
 #include <WiFiUdp.h>
 #include <NTPClient.h>
-#include <ESPmDNS.h>
 
 class DLSNetwork {
 public:
     DLSNetwork();
     void begin(String ssid, String pass, int ledPin = -1);
     void update();
-    bool startMDNS(const char *hostname);
+    void setHostname(const String &hostname) { _hostname = hostname; }
 
     void setTxPower(wifi_power_t power);
     void onWiFiEvent(WiFiEvent_t event);
@@ -38,6 +37,7 @@ private:
 
     String _ssid;
     String _pass;
+    String _hostname;
     int _ledPin = -1;
     wifi_power_t _txPower = WIFI_POWER_8_5dBm;
     uint32_t _lastReconnectAttempt = 0;

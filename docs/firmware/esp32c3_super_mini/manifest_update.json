@@ -1,6 +1,6 @@
 {
     "name": "DLS Weather Node (Update) - esp32c3_super_mini",
-    "version": "1.1.1",
+    "version": "1.1.2",
     "builds": [
         {
             "chipFamily": "ESP32-C3",

@@ -26,39 +26,36 @@ The DLS Weather Node is designed to work with various ESP32 boards, sensors, and
 
 ### 📟 Supported Devices
 
-| Device Name | Chip | Environment | Tested | Notes |
-| :--- | :--- | :--- | :---: | :--- |
-| **Standard ESP32** | ESP32-WROOM | `esp32_wroom` | ✅ | Classic ESP32, full feature set |
-| **SuperMini ESP32-C3** | ESP32-C3 | `esp32c3_super_mini` | ✅ | Recommended board (low power, compact) |
-| **SuperMini ESP32-S2** | ESP32-S2 | `esp32s2_super_mini` | ❌ | Added in 1.1.1, not verified on hardware yet |
-| **SuperMini ESP32-S3** | ESP32-S3 | `esp32s3_super_mini` | ❌ | 4 MB flash, RGB LED, wind + rain pins |
-| **DevKitC ESP32-S3** | ESP32-S3 | `esp32s3_devkit` | ❌ | 8 MB flash, more free GPIOs |
-
-> ❌ = builds and is wired up, but nobody has flashed it on that board yet. Pin numbers live in
-> `variants/<board>/variant.h`; compare them with your board's silkscreen before flashing.
+| Device Name | Chip | Environment | Notes |
+| :--- | :--- | :--- | :--- |
+| **Standard ESP32** | ESP32-WROOM | `esp32_wroom` | Classic ESP32, full feature set |
+| **SuperMini ESP32-C3** | ESP32-C3 | `esp32c3_super_mini` | Recommended board (low power, compact) |
+| **SuperMini ESP32-S2** | ESP32-S2 | `esp32s2_super_mini` | 4 MB flash, native USB, wind + rain pins |
+| **SuperMini ESP32-S3** | ESP32-S3 | `esp32s3_super_mini` | 4 MB flash, RGB LED, wind + rain pins |
+| **DevKitC ESP32-S3** | ESP32-S3 | `esp32s3_devkit` | 8 MB flash, more free GPIOs |
 
 ### 🌡️ Supported Sensors
 
-| Sensor | Type | Tested | Measurements |
-| :--- | :--- | :---: | :--- |
-| **BMP280** | I2C | ✅ | Temperature, Pressure |
-| **BME280** | I2C | ✅ | Temperature, Humidity, Pressure |
-| **BME680** | I2C | ✅ | Temperature, Humidity, Pressure, Gas (IAQ) |
-| **SHT31** | I2C | ✅ | Temperature, Humidity |
-| **SHTC3** | I2C | ❌ | Temperature, Humidity |
-| **SHT35** | I2C | ❌ | Temperature, Humidity |
-| **VEML6075** | I2C | ❌ | UV Index (supported in code, not verified) |
-| **BH1750** | I2C | ❌ | Light Level (planned) |
+| Sensor | Type | Measurements |
+| :--- | :--- | :--- |
+| **BMP280** | I2C | Temperature, Pressure |
+| **BME280** | I2C | Temperature, Humidity, Pressure |
+| **BME680** | I2C | Temperature, Humidity, Pressure, Gas (IAQ) |
+| **SHT31** | I2C | Temperature, Humidity |
+| **SHTC3** | I2C | Temperature, Humidity |
+| **SHT35** | I2C | Temperature, Humidity |
+| **VEML6075** | I2C | UV Index |
+| **BH1750** | I2C | Light Level (planned) |
 
 Detection order is BME680 → SHT3x → SHTC3 → BME280 → BMP280; the first responder wins and is printed
 on the serial log and on the device screen. Only one air sensor is used at a time.
 
 ### 📺 Supported Displays
 
-| Display Controller | Size | Tested | Interface |
-| :--- | :--- | :---: | :--- |
-| **SSD1306** | 0.96" / 1.3" OLED | ✅ | I2C |
-| **SH1106** | 1.3" OLED | ✅ | I2C |
+| Display Controller | Size | Interface |
+| :--- | :--- | :--- |
+| **SSD1306** | 0.96" / 1.3" OLED | I2C |
+| **SH1106** | 1.3" OLED | I2C |
 
 If no display is found the firmware runs headless.
 
@@ -166,24 +163,24 @@ You can monitor your node from the web dashboard.
 Once the node is on Wi-Fi it serves a small local UI (no internet needed, no CDN):
 
 ```
-http://dls-weather-<station>.local     # mDNS
 http://<device-ip>/
 ```
 
 - **PIN protected.** A 6-digit PIN is generated on first boot, stored in NVS and shown on the OLED
   startup screen, on the `NETWORK` page and in the serial boot log (`pin` command reprints it).
 - 5 wrong PINs trigger a 60-second lockout; the session cookie lasts 12 hours.
-- `Host` header is validated (IP or `*.local`) and cross-origin `POST`s are rejected, which blocks
+- `Host` header is validated and cross-origin `POST`s are rejected, which blocks
   DNS-rebinding/CSRF attempts from web pages.
 - Secrets are never echoed back: leave the password/API-key field empty to keep the stored value.
+- `GET /api/weather` is open (no PIN required, CORS enabled) so local dashboards and scripts can poll it directly.
 
 | Endpoint | Description |
 | :--- | :--- |
-| `GET /` | Status + settings page |
-| `POST /save` | Validate and store settings, then restart |
-| `GET /api/weather` | Latest measurement as JSON |
-| `GET /api/status` | Firmware version, uptime, RSSI, heap, sensor list |
-| `POST /restart` | Reboot the device |
+| `GET /` | Status + settings page (PIN required) |
+| `POST /save` | Validate and store settings, then restart (PIN required) |
+| `GET /api/weather` | Latest measurement as JSON (open, no PIN required) |
+| `GET /api/status` | Firmware version, uptime, RSSI, heap, sensor list (PIN required) |
+| `POST /restart` | Reboot the device (PIN required) |
 
 ### Serial console (115200 baud)
 
@@ -292,7 +289,7 @@ src/
   Config/                  NVS settings, validation, serial console
   Sensor/                  I2C auto-detect, wind/rain ISR, rain daily reset
   Display/                 OLED pages (skips missing sensors)
-  NetworkManager/          Wi-Fi, NTP, mDNS, TX power, LED
+  NetworkManager/          Wi-Fi, NTP, TX power, LED
   WebUI/                   PIN-protected UI + JSON API (HTML in PROGMEM)
 variants/<board>/          variant.h pin map + PlatformIO env
 include/version.h          single firmware version source

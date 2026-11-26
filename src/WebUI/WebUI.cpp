@@ -194,6 +194,7 @@ void WebUI::route() {
     _server.on("/api/weather", HTTP_GET, [this]() { onApiWeather(); });
     _server.on("/api/status", HTTP_GET, [this]() { onApiStatus(); });
     _server.on("/restart", HTTP_POST, [this]() { onRestart(); });
+    _server.on("/favicon.ico", HTTP_GET, [this]() { _server.send(204, "text/plain", ""); });
     _server.onNotFound([this]() {
         if (!hostAllowed()) return sendApiError(403, "forbidden host");
         sendApiError(404, "not found");
@@ -312,9 +313,6 @@ void WebUI::onSave() {
 }
 
 void WebUI::onApiWeather() {
-    if (!hostAllowed()) return sendApiError(403, "forbidden host");
-    if (!isAuthed()) return sendApiError(401, "auth required");
-
     JsonDocument doc;
     doc["status"] = true;
     if (_air.valid) {
@@ -340,6 +338,7 @@ void WebUI::onApiWeather() {
 
     String out;
     serializeJson(doc, out);
+    _server.sendHeader("Access-Control-Allow-Origin", "*");
     sendJson(200, out);
 }
 

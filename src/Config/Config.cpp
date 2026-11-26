@@ -53,6 +53,7 @@ void Config::load() {
     if (!validLat(_lat)) _lat = 0.0f;
     if (!validLon(_lon)) _lon = 0.0f;
     if (_ssid.length() > CFG_SSID_MAX) _ssid = _ssid.substring(0, CFG_SSID_MAX);
+    if (_apiKey.length() > CFG_APIKEY_MAX) _apiKey = _apiKey.substring(0, CFG_APIKEY_MAX);
     if (_stationId.length() > CFG_STATION_MAX) _stationId = _stationId.substring(0, CFG_STATION_MAX);
     if (_alias.length() > CFG_ALIAS_MAX) _alias = _alias.substring(0, CFG_ALIAS_MAX);
 }

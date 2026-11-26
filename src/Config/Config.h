@@ -6,7 +6,7 @@
 // --- Sinir degerleri (tek yerde) ---
 #define CFG_SSID_MAX     32
 #define CFG_PASS_MAX     64
-#define CFG_APIKEY_MAX   64
+#define CFG_APIKEY_MAX   128
 #define CFG_STATION_MAX  32
 #define CFG_ALIAS_MAX    32
 #define CFG_PIN_LEN      6
